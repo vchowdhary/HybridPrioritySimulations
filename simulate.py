@@ -1,189 +1,209 @@
-# Plan:
-
-import heapq
 import numpy as np
+import sys
+import argparse
 
-print("Hello")
-ARRIVAL = 1
-DEPARTURE = 0
-
+# Basic job class
 class Job():
-    def __init__(self, jid, arrival_time, job_class):
-        self.jid = jid
+    def __init__(self, size, arrival_time, jid, priority=1):
+        self.size = size
         self.arrival_time = arrival_time
-        self.num_jobs_seen = None
-        self.num_jobs1_seen = None
-        self.num_jobs2_seen = None
-        self.departure_time = None
-        self.job_class = job_class
-
-    def get_response_time(self):
-        if self.departure_time is None:
-            return None
-        else:
-            return self.departure_time - self.arrival_time
-
-    def __str__(self):
-        return (str(self.jid))
+        self.priority = 1
+        self.jid = jid
 
     def __repr__(self):
-        return str(self)
-        #return "Job {} arrives at {}, depart at {}, class {}".format(self.jid, self.arrival_time, self.departure_time, self.job_class)
+        return "Job {}, priority {}, arrived at {}, size {}".format(self.jid,
+                                                                    self.priority,
+                                                                    self.arrival_time,
+                                                                    self.size)
+# Basic server class
+class Server():
+    def __init__(self):
+        self.job_serving = None
+        self.time_depart = float('inf')
 
-def simulate_mm1(goal_num_jobs, mu, lambda_):
-    def generate_arrival():
-        return np.random.exponential(1.0/lambda_)
+    def time_next_depart(self):
+        # Time for job to depart
+        return self.time_depart
 
-    def generate_size():
-        return np.random.exponential(1.0/mu)
+    def complete(self):
+        # Complete the job currently being served
+        job = self.job_serving
+        # Reset server to default state
+        self.job_serving = None
+        self.time_depart = float('inf')
+        return job
 
-    next_arrival  = generate_arrival()
-    next_service = generate_size() + next_arrival
-    t = next_arrival
-    num_in_system = 0
-    num_completions = 0
-    queue = []
-    completed_jobs = []
-    jid = 1
+    def push(self, job, time_now):
+        # Push job to server and update departure time
+        if job is not None and self.job_serving is None:
+            self.time_depart = time_now + job.size
+            self.job_serving = job
 
-    while num_completions < goal_num_jobs:
-        if t == next_arrival:
-            job = Job(jid, t)
-            jid += 1
-            queue.append(job)
+    def work(self, time_now):
+        # Work left in server is just the current job
+        return self.time_depart - time_now
 
-            next_arrival = t + generate_arrival()
-        if t == next_service:
-            job = queue.pop(0)
-            job.departure_time = t
-            job.num_jobs_seen = len(queue)
-            completed_jobs.append(job)
-            num_completions += 1
-            if len(queue) == 0:
-                next_service = next_arrival +generate_size()
-            else:
-                next_service = t + generate_size()
-        t = min(next_arrival, next_service)
-
-    Tavg = sum([job.get_response_time() for job in
-                          completed_jobs])/num_completions
-    Navg = sum([job.num_jobs_seen for job in
-                completed_jobs])/num_completions
-    return Tavg, Navg
-
-
-def simulate_bp(goal_num_jobs, mu1, mu2, lambda1, lambda2):
-    def generate_arrival():
-        return np.random.exponential(1.0/(lambda1 + lambda2))
-    def generate_size(job_class):
-        if job_class == 1:
-            return np.random.exponential(1.0/mu1)
+    def num_jobs(self):
+        if self.job_serving is None:
+            return 0
         else:
-            return np.random.exponential(1.0/mu2)
+            return 1
 
-    next_arrival  = generate_arrival()
-    is_class1 = np.random.binomial(1, lambda1/(lambda1 + lambda2))
+class FCFSQueue():
+    def __init__(self):
+        self.jobs_waiting = []
+        self.work = 0.0
 
-    if is_class1 == 1:
-        next_service = next_arrival + generate_size(1)
-        next_class = 1
-    else:
-        next_service = next_arrival + generate_size(2)
-        next_class = 2
+    def pop(self):
+        # Pop job from queue and update current work in queue
+        if len(self.jobs_waiting) == 0:
+            return None
+        job = self.jobs_waiting.pop(0)
+        self.work -= job.size
+        return job
 
-    t = next_arrival
-    num_completions = 0
-    num1_completions = 0
-    num2_completions = 0
-    queues = [[], []]
-    completed_jobs = []
-    jid = 1
+    def push(self, job):
+        self.work += job.size
+        self.jobs_waiting.append(job)
 
-    while num_completions < goal_num_jobs:
-        #print("Class 1 Queue:", str(queues[0]))
-        #print("Class 2 Queue:", str(queues[1]))
-        #print("next arrival {}, is class 1? {}, next service {}, next class service {}".format(next_arrival, is_class1 == 1, next_service, next_class))
-        if t == next_arrival:
-            # Figure out which class next arrival goes to
-            if is_class1 == 1:
-                job = Job(jid, t, 1)
-                queues[0].append(job)
-            else:
-                job = Job(jid, t, 2)
-                queues[1].append(job)
+    def work(self):
+        return self.work
 
-            jid += 1
-            next_arrival = t + generate_arrival()
-            is_class1 = np.random.binomial(1, lambda1/(lambda1+lambda2))
-            #print("Customer {} arrived at {}, class 2".format(jid - 1, t))
-        if t == next_service:
-            #print(t, next_class)
-            # Job in service is completed
-            job = queues[next_class - 1].pop(0)
-            job.departure_time = t
-            job.num_jobs1_seen = len(queues[0])
-            job.num_jobs2_seen = len(queues[1])
-            completed_jobs.append(job)
-            if next_class == 1:
-                num1_completions += 1
-            else:
-                num2_completions += 1
-            num_completions += 1
+    def num_jobs(self):
+        return len(self.jobs_waiting)
 
-            if len(queues[0]) == 0 and len(queues[1]) == 0:
-                if is_class1 == 1:
-                    next_service = next_arrival + generate_size(1)
-                    next_class = 1
-                else:
-                    next_service = next_arrival + generate_size(2)
-                    next_class = 2
-            elif len(queues[0]) == 0 and len(queues[1]) != 0:
-                next_service = t + generate_size(2)
-                next_class = 2
-            else:
-                next_service = t + generate_size(1)
-                next_class = 1
+# Basic Poisson Arrivals
+class Arrivals():
+    def __init__(self, lambda_, mu):
+        self.time_next_arrive = np.random.exponential(1.0/lambda_)
+        self.arrival_rate = lambda_
+        self.mu = mu
+        self.jid = 0
 
-        #print("Class 1 Queue:", str(queues[0]))
-        #print("Class 2 Queue:", str(queues[1]))
-        t = min(next_arrival, next_service)
+    def time_next_arrive(self):
+        return self.time_next_arrive
 
-    T1avg = 0 if num1_completions == 0 else sum([job.get_response_time() for job in completed_jobs if
-                 job.job_class == 1])/num1_completions
-    T2avg = 0 if num2_completions == 0 else sum([job.get_response_time() for job in completed_jobs if
-                 job.job_class == 2])/num2_completions
-    N1avg = sum([job.num_jobs1_seen for job in completed_jobs])/num_completions
-    N2avg = sum([job.num_jobs2_seen for job in completed_jobs])/num_completions
-    return T1avg, T2avg, N1avg, N2avg
+    def arrive(self):
+        # New job arrives
+        curr_time = self.time_next_arrive
+        jid = self.jid
+        next_arrival = np.random.exponential(1.0/self.arrival_rate)
+        size = np.random.exponential(1.0/self.mu)
+
+        self.jid += 1
+        self.time_next_arrive += next_arrival
+
+        return (curr_time, Job(size, curr_time, jid))
 
 
-mu1 = 1000
-lambda1 = 100
-mu2 = 1000
-lambda2 = 800
+class ArrivalEvent():
+    def __init__(self, time):
+        self.time = time
+    def __repr__(self):
+        return "Arrival {}".format(self.time)
 
-rho1 = lambda1/mu1
-rho2 = lambda2/mu2
-print(rho1, rho2)
-num_runs = 1000
-T1ens = 0
-T2ens = 0
-N1ens = 0
-N2ens = 0
-for i in range(num_runs):
-    res = simulate_bp(100000, mu1, mu2, lambda1, lambda2)
-    T1ens += res[0]
-    T2ens += res[1]
-    N1ens += res[2]
-    N2ens += res[3]
-    print(i, res)
 
-T1avg = T1ens/num_runs
-T2avg = T2ens/num_runs
-N1avg = N1ens/num_runs
-N2avg = N2ens/num_runs
+class DepartEvent():
+    def __init__(self, curr_time, response_time, num_jobs_seen, job):
+        self.curr_time = curr_time
+        self.response_time = response_time
+        self.num_jobs_seen = num_jobs_seen
+        self.job = job
+    def __repr__(self):
+        return "Job {} departs at {}, response time {}".format(self.job.jid,
+                                                               self.curr_time,
+                                                               self.response_time)
 
-print("T1: {}, T2: {}, N1: {}, N2: {}".format(T1avg, T2avg, N1avg, N2avg))
-print("Little's Law for Class 1 Jobs: {}".format(lambda1*T1avg))
-print("Little's Law for Class 2 Jobs: {}".format(lambda2*T2avg))
-print("Little's Law overall; expected: {}, actual: {}".format(lambda1*T1avg + lambda2*T2avg, N1avg + N2avg))
+class FCFSSystem():
+    def __init__(self, num_runs, num_jobs_per_run, lambda_, mu):
+        self.time = 0
+        self.num_runs = num_runs
+        self.num_jobs_per_run = num_jobs_per_run
+        self.server = Server()
+        self.queue = FCFSQueue()
+        self.arrivals = Arrivals(lambda_, mu)
+
+    def step(self):
+        if self.server.time_next_depart() <= self.arrivals.time_next_arrive:
+            # Complete the job in the server
+            self.time = self.server.time_next_depart()
+            completed_job = self.server.complete()
+
+            # Pop job from queue and push to server
+            new_job_to_serve = self.queue.pop()
+
+            if new_job_to_serve is not None:
+                self.server.push(new_job_to_serve, self.time)
+
+            # Get num jobs in system
+            num_jobs = self.queue.num_jobs() + self.server.num_jobs()
+
+            return DepartEvent(self.time, self.time - completed_job.arrival_time, num_jobs, completed_job)
+        # Otherwise is arrival
+        self.time = self.arrivals.time_next_arrive
+        _, job_arrive = self.arrivals.arrive()
+
+        if self.server.num_jobs() == 0:
+            self.server.push(job_arrive, self.time)
+        else:
+            self.queue.push(job_arrive)
+
+        return ArrivalEvent(self.time)
+
+    def simulate_run(self):
+        num_completions = 0
+        responses = []
+        while num_completions < self.num_jobs_per_run:
+            event = self.step()
+            if isinstance(event, DepartEvent):
+                num_completions += 1
+                responses.append(event)
+
+        response_times = [event.response_time for event in responses]
+        num_jobs_seen = [event.num_jobs_seen for event in responses]
+
+        return (sum(response_times)/len(response_times),
+         sum(num_jobs_seen)/len(num_jobs_seen))
+
+    def simulate(self):
+        T_runs = []
+        N_runs = []
+        for i in range(self.num_runs):
+            avg_response_time, avg_jobs_seen = self.simulate_run()
+            T_runs.append(avg_response_time)
+            N_runs.append(avg_jobs_seen)
+        return T_runs, N_runs
+
+
+def run_fcfs_basic(num_runs, num_jobs_per_run, lambda_, mu):
+    print("Running Basic FCFS Simulation...")
+    basic_system = FCFSSystem(num_runs, num_jobs_per_run, lambda_, mu)
+    T_runs, N_runs = basic_system.simulate()
+
+    ET = sum(T_runs)/len(T_runs)
+    EN = sum(N_runs)/len(N_runs)
+    rho = lambda_/mu
+
+    print("Lambda: {}, mu: {}, rho: {}".format(lambda_, mu, rho))
+    print("E[T]: {}, E[N]: {}".format(ET, EN))
+    print("Expected E[T]: {}, Actual E[T]: {}".format(1/(mu - lambda_), ET))
+    print("Expected E[N]: {}, Actual E[N]: {}".format(rho/(1-rho), EN))
+    print("Little's Law holds? lambdaE[T]: {}, E[N]: {}".format(lambda_*ET, EN))
+
+
+parser = argparse.ArgumentParser(description='What settings do you want to run with?')
+parser.add_argument('system', metavar='S', type=int, help='What system do you want to run? \\ 0. Basic FCFS',
+                    default=0)
+parser.add_argument('--num_runs', metavar='R', type=int, help = 'Number of runs in simulation', default = 100)
+parser.add_argument('--num_jobs_per_run', metavar='J', type=int, help = 'Number of jobs per run in simulation', default = 1000)
+parser.add_argument('--lambda_', metavar='lam', type=float, help =
+                    'Arrival rate', default = 8)
+parser.add_argument('--mu', metavar='mu', type=float, help = 'Service rate', default = 10)
+
+
+args = parser.parse_args()
+
+FCFS = 0
+
+if args.system == FCFS:
+    run_fcfs_basic(args.num_runs, args.num_jobs_per_run, args.lambda_, args.mu)
