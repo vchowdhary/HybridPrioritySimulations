@@ -63,4 +63,3 @@ class PriorityArrivals():
 
         new_job = jobs.Job(size, curr_time, jid, new_job_class)
         return new_job
-
