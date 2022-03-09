@@ -62,12 +62,12 @@ def run_np_basic(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2):
     print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda_*ET, EN))
 
 parser = argparse.ArgumentParser(description='What settings do you want to run with?')
-parser.add_argument('system', metavar='S', type=int, help='What system do you want to run? \\ 0. Basic FCFS',
+parser.add_argument('system', metavar='S', type=int, help='What system do you want to run? \\ 0. Basic FCFS \\ 1. Basic Two Queue NP', 
                     default=0)
+
 parser.add_argument('--num_runs', metavar='R', type=int, help = 'Number of runs in simulation', default = 100)
 parser.add_argument('--num_jobs_per_run', metavar='J', type=int, help = 'Number of jobs per run in simulation', default = 1000)
-parser.add_argument('--lambda_', metavar='lam', type=float, help =
-                    'Arrival rate', default = 8)
+parser.add_argument('--lambda_', metavar='lam', type=float, help = 'Arrival rate', default = 8)
 parser.add_argument('--mu', metavar='mu', type=float, help = 'Service rate', default = 10)
 
 parser.add_argument('--lambda1', metavar='lam1', type=float, help='Arrival rate for class 1', default = .7)
