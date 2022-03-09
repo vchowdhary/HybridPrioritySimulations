@@ -21,10 +21,13 @@ def run_fcfs_basic(num_runs, num_jobs_per_run, lambda_, mu):
 def run_np_basic(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2):
     print("Running Basic NonPreemptive Simulation...")
     basic_system = basic_np_system.NPPrioritySystem(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2)
-    T1_runs, T2_runs, N1_runs, N2_runs = basic_system.simulate()
+    T1_runs, T2_runs, TQ1_runs, TQ2_runs, N1_runs, N2_runs = basic_system.simulate()
 
     ET1 = sum(T1_runs)/len(T1_runs)
     ET2 = sum(T2_runs)/len(T2_runs)
+
+    ETQ1 = sum(TQ1_runs)/len(TQ1_runs)
+    ETQ2 = sum(TQ2_runs)/len(TQ2_runs)
 
     EN1 = sum(N1_runs)/len(N1_runs)
     EN2 = sum(N2_runs)/len(N2_runs)
@@ -34,21 +37,26 @@ def run_np_basic(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2):
     rho = rho1 + rho2
 
     lambda_ = lambda1 + lambda2
-    Se = lambda1/lambda_ * 1/mu1 + lambda2/lambda_ * 1/mu2
+    Se = lambda1/lambda_ * 1/(mu1) + lambda2/lambda_ * 1/(mu2)
 
     print("Se: {}".format(Se))
 
     ET = lambda1/lambda_*ET1 + lambda2/lambda_*ET2
     EN = EN1 + EN2
 
-    goalT1 = rho*Se/(1-rho1) + 1/mu1
-    goalT2 = rho*Se/((1-rho1)*(1-rho)) + 1/mu2
+    expectedTQ1 = rho*Se/(1-rho1)
+    expectedTQ2 = rho*Se/((1-rho1)*(1-rho))
+
+    goalT1 = expectedTQ1 + 1/mu1
+    goalT2 = expectedTQ2 + 1/mu2
 
     print("Lambda1: {}, lambda2: {}, mu1: {}, mu2: {}, rho1: {}, rho2: {}".format(lambda1, lambda2, mu1, mu2, rho1, rho2))
     print("E[T1]: {}, E[N1]: {}".format(ET1, EN1))
     print("E[T2]: {}, E[N2]: {}".format(ET2, EN2))
     print("Expected E[T1]: {}, Actual E[T1]: {}".format(goalT1, ET1))
     print("Expected E[T2]: {}, Actual E[T2]: {}".format(goalT2, ET2))
+    print("Expected E[TQ1]: {}, Actual E[TQ1]: {}".format(expectedTQ1, ETQ1))
+    print("Expected E[TQ2]: {}, Actual E[TQ2]: {}".format(expectedTQ2, ETQ2))
     print("Little's Law holds for class 1? lambda1E[T1]: {}, E[N1]: {}".format(lambda1*ET1, EN1))
     print("Little's Law holds for class 2? lambda2E[T2]: {}, E[N2]: {}".format(lambda2*ET2, EN2))
     print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda_*ET, EN))

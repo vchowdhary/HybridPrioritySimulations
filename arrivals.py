@@ -4,7 +4,7 @@ import jobs
 # Basic Poisson Arrivals
 class Arrivals():
     def __init__(self, lambda_, mu):
-        self.time_next_arrive = np.random.exponential(1.0/lambda_)
+        self.time_next_arrive = 0.0
         self.arrival_rate = lambda_
         self.mu = mu
         self.jid = 0
@@ -27,7 +27,7 @@ class Arrivals():
 class PriorityArrivals():
     def __init__(self, lambda1, lambda2, mu1, mu2):
         lambda_ = lambda1 + lambda2
-        self.time_next_arrive = np.random.exponential(1.0/lambda_)
+        self.time_next_arrive = 0.0
         self.is_class_1_prob = lambda1/lambda_
         self.arrival_rate = lambda_
         self.mu1 = mu1

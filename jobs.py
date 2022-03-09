@@ -3,6 +3,7 @@ class Job():
     def __init__(self, size, arrival_time, jid, priority=1):
         self.size = size
         self.arrival_time = arrival_time
+        self.start_service_time = None
         self.priority = priority
         self.jid = jid
 

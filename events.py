@@ -25,16 +25,18 @@ class DepartEvent():
                                                                self.response_time)
 
 class PriorityDepartEvent():
-    def __init__(self, curr_time, response_time, num1_jobs_seen, num2_jobs_seen, job):
+    def __init__(self, curr_time, response_time, num1_jobs_seen, num2_jobs_seen, waiting_time, job):
         self.curr_time = curr_time
         self.response_time = response_time
         self.num1_jobs_seen = num1_jobs_seen
         self.num2_jobs_seen = num2_jobs_seen
+        self.waiting_time = waiting_time
         self.job = job
     def __repr__(self):
-        return "Job {} departs at {:.3f}, response time {:.3f}, num 1 jobs {}, num 2 jobs {}".format(self.job.jid,
+        return "Job {} departs at {:.3f}, response time {:.3f}, waiting time {:.3f}, num 1 jobs {}, num 2 jobs {}".format(self.job.jid,
                                                                self.curr_time,
                                                                self.response_time,
+                                                               self.waiting_time,
                                                                self.num1_jobs_seen,
                                                                self.num2_jobs_seen)
 
