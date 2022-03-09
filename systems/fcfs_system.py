@@ -1,8 +1,8 @@
-import arrivals
-import server
-import jobs
+import util.arrivals as arrivals
+import util.server as server
+import util.jobs as jobs
 import queue
-import events
+import analysis.events as events
 
 class FCFSSystem():
 	def __init__(self, num_runs, num_jobs_per_run, lambda_, mu):

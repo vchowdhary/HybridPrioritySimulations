@@ -1,4 +1,4 @@
-import jobs
+import util.jobs as jobs
 
 # Basic server class
 class Server():

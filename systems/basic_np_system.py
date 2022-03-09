@@ -1,9 +1,9 @@
 from multiprocessing.connection import wait
-import arrivals
-import server
+import util.arrivals as arrivals
+import util.server as server
 import sys
 import queue
-import events
+import analysis.events as events
 
 def progress(count, total, status=''):
 	bar_len = 60

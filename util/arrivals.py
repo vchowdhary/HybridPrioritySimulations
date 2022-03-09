@@ -1,5 +1,5 @@
 import numpy as np
-import jobs
+import util.jobs as jobs
 
 # Basic Poisson Arrivals
 class Arrivals():

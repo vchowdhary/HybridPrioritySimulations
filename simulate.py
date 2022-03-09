@@ -1,7 +1,7 @@
 import argparse
-import fcfs_system
-import basic_np_system
-import switching_np_system
+import systems.fcfs_system as fcfs_system
+import systems.basic_np_system as basic_np_system
+import systems.switching_np_system as switching_np_system
 
 def run_fcfs_basic(num_runs, num_jobs_per_run, lambda_, mu):
 	print("Running Basic FCFS Simulation...")

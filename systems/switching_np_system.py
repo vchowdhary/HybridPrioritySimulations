@@ -1,11 +1,11 @@
 from os import stat
-import arrivals
-import server
+import util.arrivals as arrivals
+import util.server as server
 import sys
-import queue
-import events
+import util.queue as queue
+import analysis.events as events
 import numpy as np
-import statistic
+import analysis.statistic as statistic
 
 def progress(count, total, status=''):
 	bar_len = 60
