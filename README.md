@@ -22,3 +22,6 @@ The parameters are as follows:
 * `lambda2`: arrival rate of class 2
 * `mu2`: service rate of class 2
 * `stay-prob`: probability that a class 1 job is sent to class A (i.e. first priority) and class 2 job is sent to class B (i.e second priority)
+
+# Acknowledgements
+Much of the basic outline of the system is adapted from Ziv Scully's Quevent code. 
