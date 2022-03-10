@@ -71,7 +71,7 @@ class SwitchingNPSystem():
 
 		# Get class 1 jobs and class 2 jobs across both queues
 		num1_jobs = self.queueA.num_jobs_priority(1) + self.queueB.num_jobs_priority(1) + self.server.num_jobs_priority(1)
-		num2_jobs = self.queueA.num_jobs_priority(2) + self.queueB.num_jobs_priority(2) + self.server.num_jobs_priority(1)
+		num2_jobs = self.queueA.num_jobs_priority(2) + self.queueB.num_jobs_priority(2) + self.server.num_jobs_priority(2)
 
 		# Get class A jobs and class B jobs
 		numA_jobs = self.queueA.num_jobs() + self.server.num_jobs_final_priority(1)
@@ -109,6 +109,9 @@ class SwitchingNPSystem():
 		num_completions1 = 0
 		num_completions2 = 0
 
+		num_completionsA = 0
+		num_completionsB = 0
+
 		responses = []
 		waiting_times = []
 
@@ -121,13 +124,17 @@ class SwitchingNPSystem():
 		jobA_sizes = []
 		jobB_sizes = []
 
-		while num_completions1 < self.num_jobs_per_run and num_completions2 < self.num_jobs_per_run:
+		while num_completions1 < self.num_jobs_per_run or num_completions2 < self.num_jobs_per_run or num_completionsA < self.num_jobs_per_run or num_completionsB < self.num_jobs_per_run:
 			event = self.step()
 			if isinstance(event, events.SwitchingPriorityDepartEvent):
 				if event.job.priority == 1:
 					num_completions1 += 1
 				else:
 					num_completions2 += 1
+				if event.job.final_priority == 1:
+					num_completionsA += 1
+				else:
+					num_completionsB += 1
 				responses.append(event)
 				waiting_times.append(event)
 			else:
