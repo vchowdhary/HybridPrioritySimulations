@@ -1,7 +1,6 @@
 import util.arrivals as arrivals
 import util.server as server
-import util.jobs as jobs
-import queue
+import util.queue as queue
 import analysis.events as events
 
 class FCFSSystem():

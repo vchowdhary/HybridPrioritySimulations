@@ -48,12 +48,6 @@ class PriorityArrivals():
 		jid = self.jid
 		is_class_1 = np.random.binomial(1, self.is_class_1_prob)
 
-		# Update info for next arrival
-		self.jid += 1
-		self.time_next_arrive += next_arrival
-		# print("Next arrival will be at {:.3f}, is class 1? {}".format(self.time_next_arrive, bool(is_class_1)))
-
-		# Create and return new job
 		if is_class_1 == 1:
 			new_job_class = 1
 			size = np.random.exponential(1.0/self.mu1)
@@ -61,6 +55,11 @@ class PriorityArrivals():
 			new_job_class = 2
 			size = np.random.exponential(1.0/self.mu2)
 
+		# Update info for next arrival
+		self.jid += 1
+		self.time_next_arrive += next_arrival
+
+		# Create and return new job
 		new_job = jobs.Job(size, curr_time, jid, new_job_class)
 		return new_job
 

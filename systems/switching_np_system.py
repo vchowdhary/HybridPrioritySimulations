@@ -69,6 +69,14 @@ class SwitchingNPSystem():
 		# Get new job and generate next arrival time
 		job_arrive = self.arrivals.arrive()
 
+		# Get class 1 jobs and class 2 jobs across both queues
+		num1_jobs = self.queueA.num_jobs_priority(1) + self.queueB.num_jobs_priority(1) + self.server.num_jobs_priority(1)
+		num2_jobs = self.queueA.num_jobs_priority(2) + self.queueB.num_jobs_priority(2) + self.server.num_jobs_priority(1)
+
+		# Get class A jobs and class B jobs
+		numA_jobs = self.queueA.num_jobs() + self.server.num_jobs_final_priority(1)
+		numB_jobs = self.queueB.num_jobs() + self.server.num_jobs_final_priority(2)
+
 		if job_arrive.final_priority == 1:
 			self.queueA.push(job_arrive)
 		else:
@@ -85,14 +93,6 @@ class SwitchingNPSystem():
 				next_job = self.queueB.pop()
 				next_job.start_service_time = curr_time
 				self.server.push(next_job, curr_time)
-		
-		# Get class 1 jobs and class 2 jobs across both queues
-		num1_jobs = self.queueA.num_jobs_priority(1) + self.queueB.num_jobs_priority(1)
-		num2_jobs = self.queueA.num_jobs_priority(2) + self.queueB.num_jobs_priority(2)
-
-		# Get class A jobs and class B jobs
-		numA_jobs = self.queueA.num_jobs()
-		numB_jobs = self.queueB.num_jobs()
 
 		return events.SwitchingPriorityArrivalEvent(curr_time, num1_jobs, num2_jobs, numA_jobs, numB_jobs)
 

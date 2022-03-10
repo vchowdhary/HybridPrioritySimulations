@@ -2,6 +2,8 @@ import argparse
 import systems.fcfs_system as fcfs_system
 import systems.basic_np_system as basic_np_system
 import systems.switching_np_system as switching_np_system
+import systems.bp_np_system as bp_np_system
+import systems.server_switch_np_system as sever_np_system
 
 def run_fcfs_basic(num_runs, num_jobs_per_run, lambda_, mu):
 	print("Running Basic FCFS Simulation...")
@@ -143,6 +145,111 @@ def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, sta
 	EN = EN1 + EN2
 	print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda1*ET1 + lambda2*ET2, EN))
 
+def run_bp_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob):
+	print("Running Busy Period Non-Preemptive Simulation...")
+	rho1 = lambda1/mu1
+	rho2 = lambda2/mu2
+	rho = rho1 + rho2
+
+	lambda_ = lambda1 + lambda2
+	Se = lambda1/lambda_ * 1/(mu1) + lambda2/lambda_ * 1/(mu2)
+
+	print("Lambda1: {}, lambda2: {}, mu1: {:.4f}, mu2: {:.4f}, rho1: {}, rho2: {}, class1 priority prob: {}".format(lambda1, lambda2, mu1, mu2, rho1, rho2, class_1_prio_prob))
+	print("Se: {:.5f}".format(Se))
+	
+
+	basic_system = bp_np_system.BusyPeriodNPSystem(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob)
+	T1_runs, T2_runs, TQ1_runs, TQ2_runs, N1_runs, N2_runs, S1_runs, S2_runs = basic_system.simulate()
+
+	ES1 = sum(S1_runs)/len(S1_runs)
+	ES2 = sum(S2_runs)/len(S2_runs)
+	
+	print("Expected E[S1]: {}, Actual E[S1]: {}".format(1/mu1, ES1))
+	print("Expected E[S2]: {}, Actual E[S2]: {}".format(1/mu2, ES2))
+
+	ET1 = sum(T1_runs)/len(T1_runs)
+	ET2 = sum(T2_runs)/len(T2_runs)
+
+	ETQ1 = sum(TQ1_runs)/len(TQ1_runs)
+	ETQ2 = sum(TQ2_runs)/len(TQ2_runs)
+
+	expectedTQ1 = class_1_prio_prob*(rho*Se/(1-rho1)) + (1-class_1_prio_prob)*(rho*Se/((1-rho)*(1-rho2)))
+	expectedTQ2 = class_1_prio_prob*(rho*Se/((1-rho1)*(1-rho))) + (1-class_1_prio_prob)*(rho*Se/(1-rho2))
+
+	goalT1 = expectedTQ1 + 1/mu1
+	goalT2 = expectedTQ2 + 1/mu2
+
+	print("Expected E[T1]: {}, Actual E[T1]: {}".format(goalT1, ET1))
+	print("Expected E[T2]: {}, Actual E[T2]: {}".format(goalT2, ET2))
+	print("Expected E[TQ1]: {}, Actual E[TQ1]: {}".format(expectedTQ1, ETQ1))
+	print("Expected E[TQ2]: {}, Actual E[TQ2]: {}".format(expectedTQ2, ETQ2))
+
+	EN1 = sum(N1_runs)/len(N1_runs)
+	EN2 = sum(N2_runs)/len(N2_runs)
+
+	ET = lambda1/lambda_*ET1 + lambda2/lambda_*ET2
+	EN = EN1 + EN2
+
+	print("Little's Law holds for class 1? lambda1E[T1]: {}, E[N1]: {}".format(lambda1*ET1, EN1))
+	print("Little's Law holds for class 2? lambda2E[T2]: {}, E[N2]: {}".format(lambda2*ET2, EN2))
+	print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda1*ET1 + lambda2*ET2, EN))
+
+def compare_server_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob):
+	print("Running Basic Server Switching Non-Preemptive Simulation...")
+	rho1 = lambda1/mu1
+	rho2 = lambda2/mu2
+	rho = rho1 + rho2
+
+	lambda_ = lambda1 + lambda2
+	Se = lambda1/lambda_ * 1/(mu1) + lambda2/lambda_ * 1/(mu2)
+
+	print("Lambda1: {}, lambda2: {}, mu1: {:.4f}, mu2: {:.4f}, rho1: {}, rho2: {}, class1 priority prob: {}".format(lambda1, lambda2, mu1, mu2, rho1, rho2, class_1_prio_prob))
+	print("Se: {:.5f}".format(Se))
+
+	basic_system = sever_np_system.ServerSwitchNPSystem(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob)
+	T1_runs, T2_runs, _, _, N1_runs, N2_runs, S1_runs, S2_runs = basic_system.simulate()
+
+	ES1_server_switch = sum(S1_runs)/len(S1_runs)
+	ES2_server_switch = sum(S2_runs)/len(S2_runs)
+	
+	print("Expected E[S1]: {}, Actual E[S1]: {}".format(1/mu1, ES1_server_switch))
+	print("Expected E[S2]: {}, Actual E[S2]: {}".format(1/mu2, ES2_server_switch))
+
+	ET1_server_switch = sum(T1_runs)/len(T1_runs)
+	ET2_server_switch = sum(T2_runs)/len(T2_runs)
+
+	EN1_server_switch = sum(N1_runs)/len(N1_runs)
+	EN2_server_switch = sum(N2_runs)/len(N2_runs)
+
+	ET_server_switch = lambda1/lambda_*ET1_server_switch + lambda2/lambda_*ET2_server_switch
+	EN_server_switch = EN1_server_switch + EN2_server_switch
+
+	print("Little's Law holds for class 1? lambda1E[T1]: {}, E[N1]: {}".format(lambda1*ET1_server_switch, EN1_server_switch))
+	print("Little's Law holds for class 2? lambda2E[T2]: {}, E[N2]: {}".format(lambda2*ET2_server_switch, EN2_server_switch))
+	print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda_*ET_server_switch, EN_server_switch))
+
+	# print("Running Switching Non-Preemptive Algo...")
+	# basic_system2 = switching_np_system.SwitchingNPSystem(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob)
+	# switching_res = basic_system2.simulate()
+
+	# ET1_arrival_switch = sum(switching_res.T1s)/len(switching_res.T1s)
+	# ET2_arrival_switch = sum(switching_res.T2s)/len(switching_res.T2s)
+
+	# EN1_arrival_switch = sum(switching_res.N1s)/len(switching_res.N1s)
+	# EN2_arrival_switch = sum(switching_res.N2s)/len(switching_res.N2s)
+
+	# ET_arrival_switch = lambda1/lambda_*ET1_arrival_switch + lambda2/lambda_*ET2_arrival_switch
+	# EN_arrival_switch = EN1_arrival_switch + EN2_arrival_switch
+
+	# print("Server switch E[T1]: {}, Arrival switch E[T1]: {}".format(ET1_server_switch, ET1_arrival_switch))
+	# print("Server switch E[T2]: {}, Arrival switch E[T2]: {}".format(ET2_server_switch, ET2_arrival_switch))
+	# print("Server switch E[T]: {}, Arrival switch E[T]: {}".format(ET_server_switch, ET_arrival_switch))
+	# print("Server switch E[N1]: {}, Arrival switch E[N1]: {}".format(EN1_server_switch, EN1_arrival_switch))
+	# print("Server switch E[N2]: {}, Arrival switch E[N2]: {}".format(EN2_server_switch, EN2_arrival_switch))
+	# print("Server switch E[N]: {}, Arrival switch E[N]: {}".format(EN_server_switch, EN_arrival_switch))
+
+
+# Main
 parser = argparse.ArgumentParser(description='What settings do you want to run with?')
 parser.add_argument('system', metavar='S', type=int, help='What system do you want to run? \\ 0. Basic FCFS \\ 1. Basic Two Queue NP', 
 					default=0)
@@ -164,6 +271,8 @@ args = parser.parse_args()
 FCFS = 0
 NPBasic = 1
 SWITCHING = 2
+BPNP = 3
+SERVERNP = 4
 
 if args.system == FCFS:
 	run_fcfs_basic(args.num_runs, args.num_jobs_per_run, args.lambda_, args.mu)
@@ -173,3 +282,7 @@ elif args.system == NPBasic:
 elif args.system == SWITCHING:
 	run_switching_np(args.num_runs, args.num_jobs_per_run, args.lambda1, args.lambda2,
 	                 args.mu1, args.mu2, args.stay_prob)
+elif args.system == BPNP:
+	run_bp_np(args.num_runs, args.num_jobs_per_run, args.lambda1, args.lambda2, args.mu1, args.mu2, args.stay_prob)
+elif args.system == SERVERNP:
+	compare_server_np(args.num_runs, args.num_jobs_per_run, args.lambda1, args.lambda2, args.mu1, args.mu2, args.stay_prob)

@@ -33,3 +33,19 @@ class Server():
 			return 0
 		else:
 			return 1
+
+	def num_jobs_priority(self, priority):
+		if self.job_serving is None:
+			return 0
+		elif self.job_serving.priority == priority:
+			return 1
+		else:
+			return 0
+	
+	def num_jobs_final_priority(self, priority):
+		if self.job_serving is None:
+			return 0
+		elif self.job_serving.final_priority == priority:
+			return 1
+		else:
+			return 0

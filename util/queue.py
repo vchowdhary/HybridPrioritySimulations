@@ -12,8 +12,9 @@ class FCFSQueue():
 		return job
 
 	def push(self, job):
-		self.work += job.size
-		self.jobs_waiting.append(job)
+		if (job is not None):
+			self.work += job.size
+			self.jobs_waiting.append(job)
 
 	def work(self):
 		return self.work
