@@ -43,7 +43,9 @@ def run_np_basic(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2):
 	rho = rho1 + rho2
 
 	lambda_ = lambda1 + lambda2
-	Se = lambda1/lambda_ * 1/(mu1) + lambda2/lambda_ * 1/(mu2)
+	Ssquared = lambda1/lambda_ * 2/(mu1**2) + lambda2/lambda_ * 2/(mu2**2)
+	S = lambda1/lambda_ * 1/mu1 + lambda2/lambda_ * 1/mu2
+	Se = Ssquared/(2*S)
 
 	print("Se: {}".format(Se))
 
@@ -90,8 +92,11 @@ def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, sta
 	rhoA = stay_prob*rho1 + (1-stay_prob)*rho2
 	rhoB = stay_prob*rho2 + (1-stay_prob)*rho1
 
-	Se = lambda1/lambda_ * 1/(mu1) + lambda2/lambda_ * 1/(mu2)
-	print("Se: {:.6f}".format(Se))
+	Ssquared = lambda1/lambda_ * 2/(mu1**2) + lambda2/lambda_ * 2/(mu2**2)
+	S = lambda1/lambda_ * 1/mu1 + lambda2/lambda_ * 1/mu2
+	Se = Ssquared/(2*S)
+
+	print("Se: {:.6f}, S: {:.6f}".format(Se, S))
 
 	print("Lambda1: {}, lambda2: {}, lambda: {}, mu1: {:.3f}, mu2: {:.3f}, rho1: {:.3f}, rho2: {:.3f}, stay prob: {}".format(lambda1, lambda2, lambda_, mu1, mu2, rho1, rho2, stay_prob))
 	print("LambdaA: {:.3f}, LambdaB: {:.3f}, rhoA: {:.3f}, rhoB: {:.3f}".format(lambdaA, lambdaB, rhoA, rhoB))
@@ -147,11 +152,23 @@ def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, sta
 
 	print("=======================")
 
+	# Mixing time
+
 	EMT1 = sum(switching_res.mixingTime1)/len(switching_res.mixingTime1)
 	EMT2 = sum(switching_res.mixingTime2)/len(switching_res.mixingTime2)
 
-	print("Time between class 1 jobs: {:.5f}".format(EMT1))
-	print("Time between class 2 jobs: {:.5f}".format(EMT2))
+	# Theoretical time between class 1 jobs
+	prob_job_1 = rhoA*(lambda1*stay_prob)/(lambdaA) + (1-rhoA)*rhoB*(lambda1*(1-stay_prob)/lambdaB) + (1-rhoA)*(1-rhoB)*lambda1/lambda_
+	num_class_2_jobs_between_class_1 = 1/prob_job_1 - 1
+	expectedMT1 = 1/mu2*num_class_2_jobs_between_class_1
+
+	# Theoretical time between class 2 jobs
+	prob_job_2 = 1 - prob_job_1
+	num_class_1_jobs_between_class_2 = 1/prob_job_2 - 1
+	expectedMT2 = 1/mu1 * num_class_2_jobs_between_class_1
+
+	print("Time between class 1 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT1, EMT1))
+	print("Time between class 2 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT2, EMT2))
 
 def run_bp_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob):
 	print("Running Busy Period Non-Preemptive Simulation...")
@@ -160,7 +177,9 @@ def run_bp_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_pr
 	rho = rho1 + rho2
 
 	lambda_ = lambda1 + lambda2
-	Se = lambda1/lambda_ * 1/(mu1) + lambda2/lambda_ * 1/(mu2)
+	Ssquared = lambda1/lambda_ * 2/(mu1**2) + lambda2/lambda_ * 2/(mu2**2)
+	S = lambda1/lambda_ * 1/mu1 + lambda2/lambda_ * 1/mu2
+	Se = Ssquared/(2*S)
 
 	print("Lambda1: {}, lambda2: {}, mu1: {:.4f}, mu2: {:.4f}, rho1: {}, rho2: {}, class1 priority prob: {}".format(lambda1, lambda2, mu1, mu2, rho1, rho2, class_1_prio_prob))
 	print("Se: {:.5f}".format(Se))
@@ -209,7 +228,9 @@ def compare_server_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, cl
 	rho = rho1 + rho2
 
 	lambda_ = lambda1 + lambda2
-	Se = lambda1/lambda_ * 1/(mu1) + lambda2/lambda_ * 1/(mu2)
+	Ssquared = lambda1/lambda_ * 2/(mu1**2) + lambda2/lambda_ * 2/(mu2**2)
+	S = lambda1/lambda_ * 1/mu1 + lambda2/lambda_ * 1/mu2
+	Se = Ssquared/(2*S)
 
 	print("Lambda1: {}, lambda2: {}, mu1: {:.4f}, mu2: {:.4f}, rho1: {}, rho2: {}, class1 priority prob: {}".format(lambda1, lambda2, mu1, mu2, rho1, rho2, class_1_prio_prob))
 	print("Se: {:.5f}".format(Se))
