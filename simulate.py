@@ -145,6 +145,14 @@ def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, sta
 	EN = EN1 + EN2
 	print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda1*ET1 + lambda2*ET2, EN))
 
+	print("=======================")
+
+	EMT1 = sum(switching_res.mixingTime1)/len(switching_res.mixingTime1)
+	EMT2 = sum(switching_res.mixingTime2)/len(switching_res.mixingTime2)
+
+	print("Time between class 1 jobs: {:.5f}".format(EMT1))
+	print("Time between class 2 jobs: {:.5f}".format(EMT2))
+
 def run_bp_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob):
 	print("Running Busy Period Non-Preemptive Simulation...")
 	rho1 = lambda1/mu1

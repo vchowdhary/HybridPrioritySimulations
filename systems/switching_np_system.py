@@ -27,11 +27,10 @@ class SwitchingNPSystem():
 		self.queueB = queue.FCFSQueue()
 		self.arrivals = arrivals.SwitchingPriorityArrivals(lambda1, lambda2, mu1, mu2, stay_prob)
 		self.stay_prob = stay_prob
-
-		# Start with first job and set up final priority
-		new_job = self.arrivals.arrive()
-		new_job.start_service_time = new_job.arrival_time
-		self.server.push(new_job, new_job.arrival_time)
+		self.time_between_job1 = []
+		self.time_between_job2 = []
+		self.last_served_class = None
+		self.last_served_class_time = 0.0
 
 	def handle_service(self):
 		# Get num jobs in system by adding up across the queues
@@ -55,6 +54,20 @@ class SwitchingNPSystem():
 
 		# If there was some job left to serve, start serving it
 		if new_job_to_serve is not None:
+			# Update time between jobs
+			# If same kind of job as last served, add on size to time
+			if self.last_served_class is None or new_job_to_serve.priority == self.last_served_class:
+				self.last_served_class_time += new_job_to_serve.size
+			else:
+			# Otherwise end this run and start new one
+				if self.last_served_class == 1:
+					self.time_between_job2.append(self.last_served_class_time)
+				else:
+					self.time_between_job1.append(self.last_served_class_time)
+				self.last_served_class_time = new_job_to_serve.size
+				
+			self.last_served_class = new_job_to_serve.priority
+
 			new_job_to_serve.start_service_time = curr_time
 			self.server.push(new_job_to_serve, curr_time)
 
@@ -85,14 +98,30 @@ class SwitchingNPSystem():
 		if self.server.num_jobs() == 0:
 			# Server is idle right now, so take a new job if possible
 			# class A has strict priority
+			next_job = None
 			if self.queueA.num_jobs() != 0:
 				next_job = self.queueA.pop()
-				next_job.start_service_time = curr_time
-				self.server.push(next_job, curr_time)
 			elif self.queueB.num_jobs() != 0:
 				next_job = self.queueB.pop()
+
+			if next_job is not None:
 				next_job.start_service_time = curr_time
 				self.server.push(next_job, curr_time)
+
+				# Update time between jobs
+				# If same kind of job as last served, add on size to time
+				if self.last_served_class is None or next_job.priority == self.last_served_class:
+					self.last_served_class_time += next_job.size
+				else:
+				# Otherwise end this run and start new one
+					if self.last_served_class == 1:
+						self.time_between_job2.append(self.last_served_class_time)
+					else:
+						self.time_between_job1.append(self.last_served_class_time)
+					
+					self.last_served_class_time = next_job.size
+					
+				self.last_served_class = next_job.priority
 
 		return events.SwitchingPriorityArrivalEvent(curr_time, num1_jobs, num2_jobs, numA_jobs, numB_jobs)
 
@@ -124,7 +153,17 @@ class SwitchingNPSystem():
 		jobA_sizes = []
 		jobB_sizes = []
 
-		while num_completions1 < self.num_jobs_per_run or num_completions2 < self.num_jobs_per_run or num_completionsA < self.num_jobs_per_run or num_completionsB < self.num_jobs_per_run:
+		# Start with first job and set up final priority
+		new_job = self.arrivals.arrive()
+		new_job.start_service_time = new_job.arrival_time
+		self.last_served_class = new_job.priority
+		self.last_served_class_time += new_job.size
+		self.server.push(new_job, new_job.arrival_time)
+
+		self.time_between_job1 = []
+		self.time_between_job2 = []
+
+		while num_completions1 < self.num_jobs_per_run or num_completions2 < self.num_jobs_per_run:
 			event = self.step()
 			if isinstance(event, events.SwitchingPriorityDepartEvent):
 				if event.job.priority == 1:
@@ -142,6 +181,7 @@ class SwitchingNPSystem():
 				num_jobs2_seen.append(event.num2_jobs_seen)
 				num_jobsA_seen.append(event.numA_jobs_seen)
 				num_jobsB_seen.append(event.numB_jobs_seen)
+		
 
 		# Computing SA and SB
 		jobA_sizes = [event.job.size for event in responses if event.job.final_priority == 1]
@@ -172,7 +212,10 @@ class SwitchingNPSystem():
 		NA = 0 if len(num_jobsA_seen) == 0 else sum(num_jobsA_seen)/len(num_jobsA_seen)
 		NB = 0 if len(num_jobsB_seen) == 0 else sum(num_jobsB_seen)/len(num_jobsB_seen)
 
-		return statistic.SwitchingStatistic(T1, T2, TA, TB, SA, SB, N1, N2, NA, NB)
+		timeBetweenJob1 = 0 if len(self.time_between_job1) == 0 else sum(self.time_between_job1)/len(self.time_between_job1)
+		timeBetweenJob2 = 0 if len(self.time_between_job2) == 0 else sum(self.time_between_job2)/len(self.time_between_job2)
+
+		return statistic.SwitchingStatistic(T1, T2, TA, TB, SA, SB, N1, N2, NA, NB, timeBetweenJob1, timeBetweenJob2)
 	def simulate(self):
 		t1_runs = []
 		t2_runs = []
@@ -184,6 +227,8 @@ class SwitchingNPSystem():
 		n2_runs = []
 		nA_runs = []
 		nB_runs = []
+		mt1_runs = []
+		mt2_runs = []
 		for i in range(self.num_runs):
 			run_result = self.simulate_run()
 			t1_runs.append(run_result.T1)
@@ -196,5 +241,7 @@ class SwitchingNPSystem():
 			sB_runs.append(run_result.SB)
 			nA_runs.append(run_result.NA)
 			nB_runs.append(run_result.NB)
+			mt1_runs.append(run_result.job1MixingTime)
+			mt2_runs.append(run_result.job2MixingTime)
 			progress(i, self.num_runs)
-		return statistic.SwitchingResults(t1_runs, t2_runs, tA_runs, tB_runs, sA_runs, sB_runs, n1_runs, n2_runs, nA_runs, nB_runs)
+		return statistic.SwitchingResults(t1_runs, t2_runs, tA_runs, tB_runs, sA_runs, sB_runs, n1_runs, n2_runs, nA_runs, nB_runs, mt1_runs, mt2_runs)
