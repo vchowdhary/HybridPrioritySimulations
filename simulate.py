@@ -23,20 +23,6 @@ def run_fcfs_basic(num_runs, num_jobs_per_run, lambda_, mu):
 
 def run_np_basic(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2):
 	print("Running Basic NonPreemptive Simulation...")
-	basic_system = basic_np_system.NPPrioritySystem(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2)
-	T1_runs, T2_runs, TQ1_runs, TQ2_runs, N1_runs, N2_runs, S1_runs, S2_runs = basic_system.simulate()
-
-	ET1 = sum(T1_runs)/len(T1_runs)
-	ET2 = sum(T2_runs)/len(T2_runs)
-
-	ETQ1 = sum(TQ1_runs)/len(TQ1_runs)
-	ETQ2 = sum(TQ2_runs)/len(TQ2_runs)
-
-	EN1 = sum(N1_runs)/len(N1_runs)
-	EN2 = sum(N2_runs)/len(N2_runs)
-
-	ES1 = sum(S1_runs)/len(S1_runs)
-	ES2 = sum(S2_runs)/len(S2_runs)
 
 	rho1 = lambda1/mu1
 	rho2 = lambda2/mu2
@@ -47,29 +33,60 @@ def run_np_basic(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2):
 	S = lambda1/lambda_ * 1/mu1 + lambda2/lambda_ * 1/mu2
 	Se = Ssquared/(2*S)
 
+	print("Lambda1: {}, lambda2: {}, mu1: {}, mu2: {}, rho1: {}, rho2: {}, rho: {}".format(lambda1, lambda2, mu1, mu2, rho1, rho2, rho))
 	print("Se: {}".format(Se))
 
-	ET = lambda1/lambda_*ET1 + lambda2/lambda_*ET2
-	EN = EN1 + EN2
+	basic_system = basic_np_system.NPPrioritySystem(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2)
+	res = basic_system.simulate()
 
+	ES1 = sum(res.S1s)/len(res.S1s)
+	ES2 = sum(res.S2s)/len(res.S2s)
+
+	print("Expected E[S1]: {}, Actual E[S1]: {}".format(1/mu1, ES1))
+	print("Expected E[S2]: {}, Actual E[S2]: {}".format(1/mu2, ES2))
+	
 	expectedTQ1 = rho*Se/(1-rho1)
 	expectedTQ2 = rho*Se/((1-rho1)*(1-rho))
+
+	ETQ1 = sum(res.TQ1s)/len(res.TQ1s)
+	ETQ2 = sum(res.TQ2s)/len(res.TQ2s)
+
+	print("Expected E[TQ1]: {}, Actual E[TQ1]: {}".format(expectedTQ1, ETQ1))
+	print("Expected E[TQ2]: {}, Actual E[TQ2]: {}".format(expectedTQ2, ETQ2))
 
 	goalT1 = expectedTQ1 + 1/mu1
 	goalT2 = expectedTQ2 + 1/mu2
 
-	print("Lambda1: {}, lambda2: {}, mu1: {}, mu2: {}, rho1: {}, rho2: {}".format(lambda1, lambda2, mu1, mu2, rho1, rho2))
-	print("Expected E[S1]: {}, Actual E[S1]: {}".format(1/mu1, ES1))
-	print("Expected E[S2]: {}, Actual E[S2]: {}".format(1/mu2, ES2))
-	print("E[T1]: {}, E[N1]: {}".format(ET1, EN1))
-	print("E[T2]: {}, E[N2]: {}".format(ET2, EN2))
+	ET1 = sum(res.T1s)/len(res.T1s)
+	ET2 = sum(res.T2s)/len(res.T2s)
+
 	print("Expected E[T1]: {}, Actual E[T1]: {}".format(goalT1, ET1))
 	print("Expected E[T2]: {}, Actual E[T2]: {}".format(goalT2, ET2))
-	print("Expected E[TQ1]: {}, Actual E[TQ1]: {}".format(expectedTQ1, ETQ1))
-	print("Expected E[TQ2]: {}, Actual E[TQ2]: {}".format(expectedTQ2, ETQ2))
+
+	EN1 = sum(res.N1s)/len(res.N1s)
+	EN2 = sum(res.N2s)/len(res.N2s)
+
+
+	ET = lambda1/lambda_*ET1 + lambda2/lambda_*ET2
+	EN = EN1 + EN2
+	
 	print("Little's Law holds for class 1? lambda1E[T1]: {}, E[N1]: {}".format(lambda1*ET1, EN1))
 	print("Little's Law holds for class 2? lambda2E[T2]: {}, E[N2]: {}".format(lambda2*ET2, EN2))
 	print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda_*ET, EN))
+
+	print("==============")
+
+	S2lam = mu2/(mu2 + lambda1)
+	EY = (S2lam*(rho2 + (1-rho2)*(lambda2/lambda_)) + (1-rho2)*(lambda1/lambda_))/(1-((1-rho2)*(lambda2/lambda_)+rho2)*S2lam)
+
+	expectedMT1 = rho1 + (1-rho1)*(1/(1-S2lam))
+	expectedMT2 = 1/(1-rho1) + (1-rho2)*(1/(1-rho1))*(lambda1/lambda2)
+
+	EMT1 = sum(res.mixingTime1)/len(res.mixingTime1)
+	EMT2 = sum(res.mixingTime2)/len(res.mixingTime2)
+
+	print("Jobs between class 1 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT1, EMT1))
+	print("Jobs between class 2 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT2, EMT2))
 
 def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, stay_prob):
 	print("Running Switching NonPreemptive Simulation...")
@@ -159,13 +176,13 @@ def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, sta
 
 	# Theoretical time between class 1 jobs
 	prob_job_1 = rhoA*(lambda1*stay_prob)/(lambdaA) + (1-rhoA)*rhoB*(lambda1*(1-stay_prob)/lambdaB) + (1-rhoA)*(1-rhoB)*lambda1/lambda_
-	num_class_2_jobs_between_class_1 = 1/prob_job_1 - 1
-	expectedMT1 = 1/mu2*num_class_2_jobs_between_class_1
+	num_class_2_jobs_between_class_1 = 1/prob_job_1
+	expectedMT1 = num_class_2_jobs_between_class_1
 
 	# Theoretical time between class 2 jobs
-	prob_job_2 = 1 - prob_job_1
-	num_class_1_jobs_between_class_2 = 1/prob_job_2 - 1
-	expectedMT2 = 1/mu1 * num_class_2_jobs_between_class_1
+	prob_job_2 = rhoA*(lambda2*(1-stay_prob)/lambdaA) + (1-rhoA)*rhoB*(lambda2*stay_prob/lambdaB) + (1-rhoA)*(1-rhoB)*(lambda2/lambda_)
+	num_class_1_jobs_between_class_2 = 1/prob_job_2
+	expectedMT2 = num_class_1_jobs_between_class_2
 
 	print("Time between class 1 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT1, EMT1))
 	print("Time between class 2 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT2, EMT2))
