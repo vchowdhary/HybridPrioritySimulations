@@ -120,8 +120,6 @@ class ServerSwitchNPSystem():
 					num_completions2 += 1
 				responses.append(event)
 				waiting_times.append(event)
-				# num_jobs1_seen.append(event.num1_jobs_seen)
-				# num_jobs2_seen.append(event.num2_jobs_seen)
 			else:
 				num_jobs1_seen.append(event.num1_jobs_seen)
 				num_jobs2_seen.append(event.num2_jobs_seen)

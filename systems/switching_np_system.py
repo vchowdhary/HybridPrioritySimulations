@@ -57,14 +57,14 @@ class SwitchingNPSystem():
 			# Update time between jobs
 			# If same kind of job as last served, add on size to time
 			if self.last_served_class is None or new_job_to_serve.priority == self.last_served_class:
-				self.last_served_class_time += new_job_to_serve.size
+				self.last_served_class_time += 1
 			else:
 			# Otherwise end this run and start new one
 				if self.last_served_class == 1:
 					self.time_between_job2.append(self.last_served_class_time)
 				else:
 					self.time_between_job1.append(self.last_served_class_time)
-				self.last_served_class_time = new_job_to_serve.size
+				self.last_served_class_time = 1
 				
 			self.last_served_class = new_job_to_serve.priority
 
@@ -111,7 +111,7 @@ class SwitchingNPSystem():
 				# Update time between jobs
 				# If same kind of job as last served, add on size to time
 				if self.last_served_class is None or next_job.priority == self.last_served_class:
-					self.last_served_class_time += next_job.size
+					self.last_served_class_time += 1
 				else:
 				# Otherwise end this run and start new one
 					if self.last_served_class == 1:
@@ -119,7 +119,7 @@ class SwitchingNPSystem():
 					else:
 						self.time_between_job1.append(self.last_served_class_time)
 					
-					self.last_served_class_time = next_job.size
+					self.last_served_class_time = 1
 					
 				self.last_served_class = next_job.priority
 

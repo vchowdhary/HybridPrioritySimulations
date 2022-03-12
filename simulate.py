@@ -274,25 +274,25 @@ def compare_server_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, cl
 	print("Little's Law holds for class 2? lambda2E[T2]: {}, E[N2]: {}".format(lambda2*ET2_server_switch, EN2_server_switch))
 	print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda_*ET_server_switch, EN_server_switch))
 
-	# print("Running Switching Non-Preemptive Algo...")
-	# basic_system2 = switching_np_system.SwitchingNPSystem(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob)
-	# switching_res = basic_system2.simulate()
+	print("Running Switching Non-Preemptive Algo...")
+	basic_system2 = switching_np_system.SwitchingNPSystem(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob)
+	switching_res = basic_system2.simulate()
 
-	# ET1_arrival_switch = sum(switching_res.T1s)/len(switching_res.T1s)
-	# ET2_arrival_switch = sum(switching_res.T2s)/len(switching_res.T2s)
+	ET1_arrival_switch = sum(switching_res.T1s)/len(switching_res.T1s)
+	ET2_arrival_switch = sum(switching_res.T2s)/len(switching_res.T2s)
 
-	# EN1_arrival_switch = sum(switching_res.N1s)/len(switching_res.N1s)
-	# EN2_arrival_switch = sum(switching_res.N2s)/len(switching_res.N2s)
+	EN1_arrival_switch = sum(switching_res.N1s)/len(switching_res.N1s)
+	EN2_arrival_switch = sum(switching_res.N2s)/len(switching_res.N2s)
 
-	# ET_arrival_switch = lambda1/lambda_*ET1_arrival_switch + lambda2/lambda_*ET2_arrival_switch
-	# EN_arrival_switch = EN1_arrival_switch + EN2_arrival_switch
+	ET_arrival_switch = lambda1/lambda_*ET1_arrival_switch + lambda2/lambda_*ET2_arrival_switch
+	EN_arrival_switch = EN1_arrival_switch + EN2_arrival_switch
 
-	# print("Server switch E[T1]: {}, Arrival switch E[T1]: {}".format(ET1_server_switch, ET1_arrival_switch))
-	# print("Server switch E[T2]: {}, Arrival switch E[T2]: {}".format(ET2_server_switch, ET2_arrival_switch))
-	# print("Server switch E[T]: {}, Arrival switch E[T]: {}".format(ET_server_switch, ET_arrival_switch))
-	# print("Server switch E[N1]: {}, Arrival switch E[N1]: {}".format(EN1_server_switch, EN1_arrival_switch))
-	# print("Server switch E[N2]: {}, Arrival switch E[N2]: {}".format(EN2_server_switch, EN2_arrival_switch))
-	# print("Server switch E[N]: {}, Arrival switch E[N]: {}".format(EN_server_switch, EN_arrival_switch))
+	print("Server switch E[T1]: {}, Arrival switch E[T1]: {}".format(ET1_server_switch, ET1_arrival_switch))
+	print("Server switch E[T2]: {}, Arrival switch E[T2]: {}".format(ET2_server_switch, ET2_arrival_switch))
+	print("Server switch E[T]: {}, Arrival switch E[T]: {}".format(ET_server_switch, ET_arrival_switch))
+	print("Server switch E[N1]: {}, Arrival switch E[N1]: {}".format(EN1_server_switch, EN1_arrival_switch))
+	print("Server switch E[N2]: {}, Arrival switch E[N2]: {}".format(EN2_server_switch, EN2_arrival_switch))
+	print("Server switch E[N]: {}, Arrival switch E[N]: {}".format(EN_server_switch, EN_arrival_switch))
 
 
 # Main
