@@ -21,8 +21,9 @@ def run_fcfs_basic(num_runs, num_jobs_per_run, lambda_, mu):
 	print("Little's Law holds? lambdaE[T]: {}, E[N]: {}".format(lambda_*ET, EN))
 
 
-def run_np_basic(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2):
-	print("Running Basic NonPreemptive Simulation...")
+def run_np_basic(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, verbose=True):
+	if verbose:
+		print("Running Basic NonPreemptive Simulation...")
 
 	rho1 = lambda1/mu1
 	rho2 = lambda2/mu2
@@ -33,8 +34,9 @@ def run_np_basic(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2):
 	S = lambda1/lambda_ * 1/mu1 + lambda2/lambda_ * 1/mu2
 	Se = Ssquared/(2*S)
 
-	print("Lambda1: {}, lambda2: {}, mu1: {}, mu2: {}, rho1: {}, rho2: {}, rho: {}".format(lambda1, lambda2, mu1, mu2, rho1, rho2, rho))
-	print("Se: {}".format(Se))
+	if verbose:
+		print("Lambda1: {}, lambda2: {}, mu1: {}, mu2: {}, rho1: {}, rho2: {}, rho: {}".format(lambda1, lambda2, mu1, mu2, rho1, rho2, rho))
+		print("Se: {}".format(Se))
 
 	basic_system = basic_np_system.NPPrioritySystem(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2)
 	res = basic_system.simulate()
@@ -42,8 +44,9 @@ def run_np_basic(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2):
 	ES1 = sum(res.S1s)/len(res.S1s)
 	ES2 = sum(res.S2s)/len(res.S2s)
 
-	print("Expected E[S1]: {}, Actual E[S1]: {}".format(1/mu1, ES1))
-	print("Expected E[S2]: {}, Actual E[S2]: {}".format(1/mu2, ES2))
+	if verbose:
+		print("Expected E[S1]: {}, Actual E[S1]: {}".format(1/mu1, ES1))
+		print("Expected E[S2]: {}, Actual E[S2]: {}".format(1/mu2, ES2))
 	
 	expectedTQ1 = rho*Se/(1-rho1)
 	expectedTQ2 = rho*Se/((1-rho1)*(1-rho))
@@ -51,8 +54,9 @@ def run_np_basic(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2):
 	ETQ1 = sum(res.TQ1s)/len(res.TQ1s)
 	ETQ2 = sum(res.TQ2s)/len(res.TQ2s)
 
-	print("Expected E[TQ1]: {}, Actual E[TQ1]: {}".format(expectedTQ1, ETQ1))
-	print("Expected E[TQ2]: {}, Actual E[TQ2]: {}".format(expectedTQ2, ETQ2))
+	if verbose:
+		print("Expected E[TQ1]: {}, Actual E[TQ1]: {}".format(expectedTQ1, ETQ1))
+		print("Expected E[TQ2]: {}, Actual E[TQ2]: {}".format(expectedTQ2, ETQ2))
 
 	goalT1 = expectedTQ1 + 1/mu1
 	goalT2 = expectedTQ2 + 1/mu2
@@ -60,33 +64,35 @@ def run_np_basic(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2):
 	ET1 = sum(res.T1s)/len(res.T1s)
 	ET2 = sum(res.T2s)/len(res.T2s)
 
-	print("Expected E[T1]: {}, Actual E[T1]: {}".format(goalT1, ET1))
-	print("Expected E[T2]: {}, Actual E[T2]: {}".format(goalT2, ET2))
+	if verbose:
+		print("Expected E[T1]: {}, Actual E[T1]: {}".format(goalT1, ET1))
+		print("Expected E[T2]: {}, Actual E[T2]: {}".format(goalT2, ET2))
 
 	EN1 = sum(res.N1s)/len(res.N1s)
 	EN2 = sum(res.N2s)/len(res.N2s)
 
-
 	ET = lambda1/lambda_*ET1 + lambda2/lambda_*ET2
 	EN = EN1 + EN2
 	
-	print("Little's Law holds for class 1? lambda1E[T1]: {}, E[N1]: {}".format(lambda1*ET1, EN1))
-	print("Little's Law holds for class 2? lambda2E[T2]: {}, E[N2]: {}".format(lambda2*ET2, EN2))
-	print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda_*ET, EN))
+	if verbose:
+		print("Little's Law holds for class 1? lambda1E[T1]: {}, E[N1]: {}".format(lambda1*ET1, EN1))
+		print("Little's Law holds for class 2? lambda2E[T2]: {}, E[N2]: {}".format(lambda2*ET2, EN2))
+		print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda_*ET, EN))
 
-	print("==============")
+		print("==============")
 
-	S2lam = mu2/(mu2 + lambda1)
-	EY = (S2lam*(rho2 + (1-rho2)*(lambda2/lambda_)) + (1-rho2)*(lambda1/lambda_))/(1-((1-rho2)*(lambda2/lambda_)+rho2)*S2lam)
-
-	expectedMT1 = rho1 + (1-rho1)*(1/(1-S2lam))
-	expectedMT2 = 1/(1-rho1) + (1-rho2)*(1/(1-rho1))*(lambda1/lambda2)
+	prob_class1_queue_empty = 1 - rho1
+	expectedMT1 = prob_class1_queue_empty*(1/lambda1)
+	expectedMT2 = ((1-rho2)/lambda2)/(1-rho1)
 
 	EMT1 = sum(res.mixingTime1)/len(res.mixingTime1)
 	EMT2 = sum(res.mixingTime2)/len(res.mixingTime2)
 
-	print("Jobs between class 1 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT1, EMT1))
-	print("Jobs between class 2 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT2, EMT2))
+	if verbose:
+		print("Jobs between class 1 jobs: expected: {:.8f}, actual: {:.8f}".format(expectedMT1, EMT1))
+		print("Jobs between class 2 jobs: expected: {:.8f}, actual: {:.8f}".format(expectedMT2, EMT2))
+
+	return (expectedMT1, EMT1, expectedMT2, EMT2)
 
 def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, stay_prob):
 	print("Running Switching NonPreemptive Simulation...")
@@ -296,39 +302,43 @@ def compare_server_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, cl
 
 
 # Main
-parser = argparse.ArgumentParser(description='What settings do you want to run with?')
-parser.add_argument('system', metavar='S', type=int, help='What system do you want to run? \\ 0. Basic FCFS \\ 1. Basic Two Queue NP', 
-					default=0)
+def main():
+	parser = argparse.ArgumentParser(description='What settings do you want to run with?')
+	parser.add_argument('system', metavar='S', type=int, help='What system do you want to run? \\ 0. Basic FCFS \\ 1. Basic Two Queue NP', 
+						default=0)
 
-parser.add_argument('--num_runs', metavar='R', type=int, help = 'Number of runs in simulation', default = 100)
-parser.add_argument('--num_jobs_per_run', metavar='J', type=int, help = 'Number of jobs per run in simulation', default = 1000)
-parser.add_argument('--lambda_', metavar='lam', type=float, help = 'Arrival rate', default = 8)
-parser.add_argument('--mu', metavar='mu', type=float, help = 'Service rate', default = 10)
+	parser.add_argument('--num_runs', metavar='R', type=int, help = 'Number of runs in simulation', default = 100)
+	parser.add_argument('--num_jobs_per_run', metavar='J', type=int, help = 'Number of jobs per run in simulation', default = 1000)
+	parser.add_argument('--lambda_', metavar='lam', type=float, help = 'Arrival rate', default = 8)
+	parser.add_argument('--mu', metavar='mu', type=float, help = 'Service rate', default = 10)
 
-parser.add_argument('--lambda1', metavar='lam1', type=float, help='Arrival rate for class 1', default = .7)
-parser.add_argument('--lambda2', metavar='lam2', type=float, help='Arrival rate for class 2', default = 2)
+	parser.add_argument('--lambda1', metavar='lam1', type=float, help='Arrival rate for class 1', default = .7)
+	parser.add_argument('--lambda2', metavar='lam2', type=float, help='Arrival rate for class 2', default = 2)
 
-parser.add_argument('--mu1', metavar='mu1', type=float, help = 'Service rate for class 1', default = 1)
-parser.add_argument('--mu2', metavar='mu2', type=float, help = 'Service rate for class 2', default = 10)
+	parser.add_argument('--mu1', metavar='mu1', type=float, help = 'Service rate for class 1', default = 1)
+	parser.add_argument('--mu2', metavar='mu2', type=float, help = 'Service rate for class 2', default = 10)
 
-parser.add_argument('--stay-prob', metavar='p', type=float, help = 'Routing probability', default = 0.8)
-args = parser.parse_args()
+	parser.add_argument('--stay-prob', metavar='p', type=float, help = 'Routing probability', default = 0.8)
+	args = parser.parse_args()
 
-FCFS = 0
-NPBasic = 1
-SWITCHING = 2
-BPNP = 3
-SERVERNP = 4
+	FCFS = 0
+	NPBasic = 1
+	SWITCHING = 2
+	BPNP = 3
+	SERVERNP = 4
 
-if args.system == FCFS:
-	run_fcfs_basic(args.num_runs, args.num_jobs_per_run, args.lambda_, args.mu)
-elif args.system == NPBasic:
-	run_np_basic(args.num_runs, args.num_jobs_per_run, args.lambda1,
-	             args.lambda2, args.mu1, args.mu2)
-elif args.system == SWITCHING:
-	run_switching_np(args.num_runs, args.num_jobs_per_run, args.lambda1, args.lambda2,
-	                 args.mu1, args.mu2, args.stay_prob)
-elif args.system == BPNP:
-	run_bp_np(args.num_runs, args.num_jobs_per_run, args.lambda1, args.lambda2, args.mu1, args.mu2, args.stay_prob)
-elif args.system == SERVERNP:
-	compare_server_np(args.num_runs, args.num_jobs_per_run, args.lambda1, args.lambda2, args.mu1, args.mu2, args.stay_prob)
+	if args.system == FCFS:
+		run_fcfs_basic(args.num_runs, args.num_jobs_per_run, args.lambda_, args.mu)
+	elif args.system == NPBasic:
+		run_np_basic(args.num_runs, args.num_jobs_per_run, args.lambda1,
+					args.lambda2, args.mu1, args.mu2)
+	elif args.system == SWITCHING:
+		run_switching_np(args.num_runs, args.num_jobs_per_run, args.lambda1, args.lambda2,
+						args.mu1, args.mu2, args.stay_prob)
+	elif args.system == BPNP:
+		run_bp_np(args.num_runs, args.num_jobs_per_run, args.lambda1, args.lambda2, args.mu1, args.mu2, args.stay_prob)
+	elif args.system == SERVERNP:
+		compare_server_np(args.num_runs, args.num_jobs_per_run, args.lambda1, args.lambda2, args.mu1, args.mu2, args.stay_prob)
+
+if __name__ == "__main__":
+    main()

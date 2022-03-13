@@ -28,7 +28,8 @@ class NPPrioritySystem():
 		self.time_between_job1 = []
 		self.time_between_job2 = []
 		self.last_served_class = None
-		self.last_served_class_time = 1.0
+		self.last_served_class1_time = None
+		self.last_served_class2_time = None
 
 	def get_next_job(self):
 		if (self.queue1.num_jobs() != 0):
@@ -41,6 +42,7 @@ class NPPrioritySystem():
 		# Get num jobs in system
 		curr_time = self.server.time_next_depart()
 		completed_job = self.server.complete()
+
 		response_time = curr_time - completed_job.arrival_time
 
 		# Pop job from queue according to class 1 having priority
@@ -50,15 +52,17 @@ class NPPrioritySystem():
 		if new_job_to_serve is not None:
 			# Update time between jobs
 			# If same kind of job as last served, add on size to time
-			if self.last_served_class is None or new_job_to_serve.priority == self.last_served_class:
-				self.last_served_class_time += 1
+			# End this run and start new one
+			if new_job_to_serve.priority == 1:
+				if self.last_served_class1_time is not None:
+					time_diff = curr_time - self.last_served_class1_time
+					self.last_served_class1_time = curr_time + new_job_to_serve.size
+					self.time_between_job1.append(time_diff)
 			else:
-			# Otherwise end this run and start new one
-				if self.last_served_class == 1:
-					self.time_between_job2.append(self.last_served_class_time)
-				else:
-					self.time_between_job1.append(self.last_served_class_time)
-				self.last_served_class_time = 1
+				if self.last_served_class2_time is not None:
+					time_diff = curr_time - self.last_served_class2_time
+					self.last_served_class2_time = curr_time + new_job_to_serve.size
+					self.time_between_job2.append(time_diff)
 				
 			self.last_served_class = new_job_to_serve.priority
 			new_job_to_serve.start_service_time = curr_time
@@ -76,6 +80,8 @@ class NPPrioritySystem():
 
 		# Get new job and generate next arrival time
 		job_arrive = self.arrivals.arrive()
+		
+		# print("Arrival at {:.4f}, {}".format(curr_time, job_arrive))
 
 		num1_jobs = self.queue1.num_jobs() + self.server.num_jobs_priority(1)
 		num2_jobs = self.queue2.num_jobs() + self.server.num_jobs_priority(2)
@@ -93,17 +99,17 @@ class NPPrioritySystem():
 				self.server.push(next_job, curr_time)
 
 				# Update time between jobs
-				# If same kind of job as last served, add on size to time
-				if self.last_served_class is None or next_job.priority == self.last_served_class:
-					self.last_served_class_time += 1
-				else:
 				# Otherwise end this run and start new one
-					if self.last_served_class == 1:
-						self.time_between_job2.append(self.last_served_class_time)
-					else:
-						self.time_between_job1.append(self.last_served_class_time)
-					
-					self.last_served_class_time = 1
+				if next_job.priority == 1:
+					if self.last_served_class1_time is not None:
+						time_diff = curr_time - self.last_served_class1_time
+						self.last_served_class1_time = curr_time + next_job.size
+						self.time_between_job1.append(time_diff)
+				else:
+					if self.last_served_class2_time is not None:
+						time_diff = curr_time - self.last_served_class2_time
+						self.last_served_class2_time = curr_time + next_job.size
+						self.time_between_job2.append(time_diff)
 					
 				self.last_served_class = next_job.priority
 
@@ -135,7 +141,10 @@ class NPPrioritySystem():
 		new_job = self.arrivals.arrive()
 		new_job.start_service_time = new_job.arrival_time
 		self.last_served_class = new_job.priority
-		self.last_served_class_time += new_job.size
+		if new_job.priority == 1:
+			self.last_served_class1_time = new_job.arrival_time
+		else:
+			self.last_served_class2_time = new_job.arrival_time
 		self.server.push(new_job, new_job.arrival_time)
 
 		self.time_between_job1 = []
