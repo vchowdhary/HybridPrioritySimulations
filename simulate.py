@@ -82,20 +82,22 @@ def run_np_basic(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, verbose
 		print("==============")
 
 	prob_class1_queue_empty = 1 - rho1
-	expectedMT1 = prob_class1_queue_empty*(1/lambda1)
-	expectedMT2 = ((1-rho2)/lambda2)/(1-rho1)
+	prob_class2_queue_empty = 1 - rho2
+	expectedMT1 = prob_class1_queue_empty*(1/lambda1 + rho2/mu2)
+	expectedMT2 = prob_class2_queue_empty*(1/lambda2 + rho1/mu1)
 
 	EMT1 = sum(res.mixingTime1)/len(res.mixingTime1)
 	EMT2 = sum(res.mixingTime2)/len(res.mixingTime2)
 
 	if verbose:
-		print("Jobs between class 1 jobs: expected: {:.8f}, actual: {:.8f}".format(expectedMT1, EMT1))
-		print("Jobs between class 2 jobs: expected: {:.8f}, actual: {:.8f}".format(expectedMT2, EMT2))
+		print("Time between class 1 jobs: expected: {:.8f}, actual: {:.8f}".format(expectedMT1, EMT1))
+		print("Time between class 2 jobs: expected: {:.8f}, actual: {:.8f}".format(expectedMT2, EMT2))
 
 	return (expectedMT1, EMT1, expectedMT2, EMT2)
 
-def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, stay_prob):
-	print("Running Switching NonPreemptive Simulation...")
+def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, stay_prob, verbose=True):
+	if verbose:
+		print("Running Switching NonPreemptive Simulation...")
 	basic_system = switching_np_system.SwitchingNPSystem(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, stay_prob)
 	
 	# System parameters
@@ -119,10 +121,11 @@ def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, sta
 	S = lambda1/lambda_ * 1/mu1 + lambda2/lambda_ * 1/mu2
 	Se = Ssquared/(2*S)
 
-	print("Se: {:.6f}, S: {:.6f}".format(Se, S))
+	if verbose:
+		print("Se: {:.6f}, S: {:.6f}".format(Se, S))
 
-	print("Lambda1: {}, lambda2: {}, lambda: {}, mu1: {:.3f}, mu2: {:.3f}, rho1: {:.3f}, rho2: {:.3f}, stay prob: {}".format(lambda1, lambda2, lambda_, mu1, mu2, rho1, rho2, stay_prob))
-	print("LambdaA: {:.3f}, LambdaB: {:.3f}, rhoA: {:.3f}, rhoB: {:.3f}".format(lambdaA, lambdaB, rhoA, rhoB))
+		print("Lambda1: {}, lambda2: {}, lambda: {}, mu1: {:.3f}, mu2: {:.3f}, rho1: {:.3f}, rho2: {:.3f}, stay prob: {}".format(lambda1, lambda2, lambda_, mu1, mu2, rho1, rho2, stay_prob))
+		print("LambdaA: {:.3f}, LambdaB: {:.3f}, rhoA: {:.3f}, rhoB: {:.3f}".format(lambdaA, lambdaB, rhoA, rhoB))
 
 	switching_res = basic_system.simulate()
 
@@ -130,8 +133,9 @@ def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, sta
 	ESA = sum(switching_res.SAs)/len(switching_res.SAs)
 	ESB = sum(switching_res.SBs)/len(switching_res.SBs)
 
-	print("Expected SA: {}, Actual SA: {}".format(expected_SA, ESA))
-	print("Expected SB: {}, Actual SB: {}".format(expected_SB, ESB))
+	if verbose:
+		print("Expected SA: {}, Actual SA: {}".format(expected_SA, ESA))
+		print("Expected SB: {}, Actual SB: {}".format(expected_SB, ESB))
 
 	# Computing expected class A and B time
 	expected_TAQ = rho*Se/(1-rhoA)
@@ -143,8 +147,9 @@ def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, sta
 	ETA = sum(switching_res.TAs)/len(switching_res.TAs)
 	ETB = sum(switching_res.TBs)/len(switching_res.TBs)
 
-	print("Expected TA: {}, Actual TA: {}".format(expected_TA, ETA))
-	print("Expected TB: {}, Actual TB: {}".format(expected_TB, ETB))
+	if verbose:
+		print("Expected TA: {}, Actual TA: {}".format(expected_TA, ETA))
+		print("Expected TB: {}, Actual TB: {}".format(expected_TB, ETB))
 
 	# Computing expected class 1 and 2 time
 
@@ -154,26 +159,32 @@ def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, sta
 	ET1 = sum(switching_res.T1s)/len(switching_res.T1s)
 	ET2 = sum(switching_res.T2s)/len(switching_res.T2s)
 
-	print("Expected T1: {}, Actual T1: {}".format(expected_T1, ET1))
-	print("Expected T2: {}, Actual T2: {}".format(expected_T2, ET2))
+	if verbose:
+		print("Expected T1: {}, Actual T1: {}".format(expected_T1, ET1))
+		print("Expected T2: {}, Actual T2: {}".format(expected_T2, ET2))
 
 	# Check Little's Law for class 1, 2, A, and B jobs and overall
 	EN1 = sum(switching_res.N1s)/len(switching_res.N1s)
-	print("Little's Law holds for class 1? lambda1*ET1: {} = EN1: {}?".format(lambda1*ET1, EN1))
+	if verbose:
+		print("Little's Law holds for class 1? lambda1*ET1: {} = EN1: {}?".format(lambda1*ET1, EN1))
 
 	EN2 = sum(switching_res.N2s)/len(switching_res.N2s)
-	print("Little's Law holds for class 2? lambda2*ET2: {} = EN2: {}?".format(lambda2*ET2, EN2))
+	if verbose:
+		print("Little's Law holds for class 2? lambda2*ET2: {} = EN2: {}?".format(lambda2*ET2, EN2))
 
 	ENA = sum(switching_res.NAs)/len(switching_res.NAs)
-	print("Little's Law holds for class A? lambdaA*ETA: {} = ENA: {}?".format(lambdaA*ETA, ENA))
+	if verbose:
+		print("Little's Law holds for class A? lambdaA*ETA: {} = ENA: {}?".format(lambdaA*ETA, ENA))
 
 	ENB = sum(switching_res.NBs)/len(switching_res.NBs)
-	print("Little's Law holds for class B? lambdaB*ETB: {} = ENB: {}?".format(lambdaB*ETB, ENB))
+	if verbose:
+		print("Little's Law holds for class B? lambdaB*ETB: {} = ENB: {}?".format(lambdaB*ETB, ENB))
 
 	EN = EN1 + EN2
-	print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda1*ET1 + lambda2*ET2, EN))
+	if verbose:
+		print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda1*ET1 + lambda2*ET2, EN))
 
-	print("=======================")
+		print("=======================")
 
 	# Mixing time
 
@@ -190,11 +201,15 @@ def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, sta
 	num_class_1_jobs_between_class_2 = 1/prob_job_2
 	expectedMT2 = num_class_1_jobs_between_class_2
 
-	print("Time between class 1 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT1, EMT1))
-	print("Time between class 2 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT2, EMT2))
+	if verbose:
+		print("Time between class 1 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT1, EMT1))
+		print("Time between class 2 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT2, EMT2))
 
-def run_bp_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob):
-	print("Running Busy Period Non-Preemptive Simulation...")
+	return (EMT1, EMT2)
+
+def run_bp_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob, verbose=True):
+	if verbose:
+		print("Running Busy Period Non-Preemptive Simulation...")
 	rho1 = lambda1/mu1
 	rho2 = lambda2/mu2
 	rho = rho1 + rho2
@@ -204,18 +219,20 @@ def run_bp_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_pr
 	S = lambda1/lambda_ * 1/mu1 + lambda2/lambda_ * 1/mu2
 	Se = Ssquared/(2*S)
 
-	print("Lambda1: {}, lambda2: {}, mu1: {:.4f}, mu2: {:.4f}, rho1: {}, rho2: {}, class1 priority prob: {}".format(lambda1, lambda2, mu1, mu2, rho1, rho2, class_1_prio_prob))
-	print("Se: {:.5f}".format(Se))
+	if verbose:
+		print("Lambda1: {}, lambda2: {}, mu1: {:.4f}, mu2: {:.4f}, rho1: {}, rho2: {}, class1 priority prob: {}".format(lambda1, lambda2, mu1, mu2, rho1, rho2, class_1_prio_prob))
+		print("Se: {:.5f}".format(Se))
 	
 
 	basic_system = bp_np_system.BusyPeriodNPSystem(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob)
-	T1_runs, T2_runs, TQ1_runs, TQ2_runs, N1_runs, N2_runs, S1_runs, S2_runs = basic_system.simulate()
+	T1_runs, T2_runs, TQ1_runs, TQ2_runs, N1_runs, N2_runs, S1_runs, S2_runs, MT1_runs, MT2_runs = basic_system.simulate()
 
 	ES1 = sum(S1_runs)/len(S1_runs)
 	ES2 = sum(S2_runs)/len(S2_runs)
 	
-	print("Expected E[S1]: {}, Actual E[S1]: {}".format(1/mu1, ES1))
-	print("Expected E[S2]: {}, Actual E[S2]: {}".format(1/mu2, ES2))
+	if verbose:
+		print("Expected E[S1]: {}, Actual E[S1]: {}".format(1/mu1, ES1))
+		print("Expected E[S2]: {}, Actual E[S2]: {}".format(1/mu2, ES2))
 
 	ET1 = sum(T1_runs)/len(T1_runs)
 	ET2 = sum(T2_runs)/len(T2_runs)
@@ -229,10 +246,11 @@ def run_bp_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_pr
 	goalT1 = expectedTQ1 + 1/mu1
 	goalT2 = expectedTQ2 + 1/mu2
 
-	print("Expected E[T1]: {}, Actual E[T1]: {}".format(goalT1, ET1))
-	print("Expected E[T2]: {}, Actual E[T2]: {}".format(goalT2, ET2))
-	print("Expected E[TQ1]: {}, Actual E[TQ1]: {}".format(expectedTQ1, ETQ1))
-	print("Expected E[TQ2]: {}, Actual E[TQ2]: {}".format(expectedTQ2, ETQ2))
+	if verbose:
+		print("Expected E[T1]: {}, Actual E[T1]: {}".format(goalT1, ET1))
+		print("Expected E[T2]: {}, Actual E[T2]: {}".format(goalT2, ET2))
+		print("Expected E[TQ1]: {}, Actual E[TQ1]: {}".format(expectedTQ1, ETQ1))
+		print("Expected E[TQ2]: {}, Actual E[TQ2]: {}".format(expectedTQ2, ETQ2))
 
 	EN1 = sum(N1_runs)/len(N1_runs)
 	EN2 = sum(N2_runs)/len(N2_runs)
@@ -240,9 +258,19 @@ def run_bp_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_pr
 	ET = lambda1/lambda_*ET1 + lambda2/lambda_*ET2
 	EN = EN1 + EN2
 
-	print("Little's Law holds for class 1? lambda1E[T1]: {}, E[N1]: {}".format(lambda1*ET1, EN1))
-	print("Little's Law holds for class 2? lambda2E[T2]: {}, E[N2]: {}".format(lambda2*ET2, EN2))
-	print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda1*ET1 + lambda2*ET2, EN))
+	if verbose:
+		print("Little's Law holds for class 1? lambda1E[T1]: {}, E[N1]: {}".format(lambda1*ET1, EN1))
+		print("Little's Law holds for class 2? lambda2E[T2]: {}, E[N2]: {}".format(lambda2*ET2, EN2))
+		print("Little's Law holds overall? lambdaE[T]: {}, E[N]: {}".format(lambda1*ET1 + lambda2*ET2, EN))
+
+		print("==============")
+
+	# Mixing time
+
+	EMT1 = sum(MT1_runs)/len(MT1_runs)
+	EMT2 = sum(MT2_runs)/len(MT2_runs)
+
+	return (EMT1, EMT2)
 
 def compare_server_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob):
 	print("Running Basic Server Switching Non-Preemptive Simulation...")

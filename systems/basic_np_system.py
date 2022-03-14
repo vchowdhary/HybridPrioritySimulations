@@ -28,8 +28,9 @@ class NPPrioritySystem():
 		self.time_between_job1 = []
 		self.time_between_job2 = []
 		self.last_served_class = None
-		self.last_served_class1_time = None
-		self.last_served_class2_time = None
+		self.last_served_class_time = None
+		self.have_seen_class2 = False
+		self.have_seen_class1 = False
 
 	def get_next_job(self):
 		if (self.queue1.num_jobs() != 0):
@@ -53,18 +54,21 @@ class NPPrioritySystem():
 			# Update time between jobs
 			# If same kind of job as last served, add on size to time
 			# End this run and start new one
-			if new_job_to_serve.priority == 1:
-				if self.last_served_class1_time is not None:
-					time_diff = curr_time - self.last_served_class1_time
-					self.last_served_class1_time = curr_time + new_job_to_serve.size
-					self.time_between_job1.append(time_diff)
-			else:
-				if self.last_served_class2_time is not None:
-					time_diff = curr_time - self.last_served_class2_time
-					self.last_served_class2_time = curr_time + new_job_to_serve.size
-					self.time_between_job2.append(time_diff)
+			if new_job_to_serve.priority != self.last_served_class:
+				if new_job_to_serve.priority == 1:
+					if self.have_seen_class1:
+						time_diff = curr_time - self.last_served_class_time
+						self.time_between_job1.append(time_diff)
+					self.have_seen_class1 = True
+				else:
+					if self.have_seen_class2:
+						time_diff = curr_time - self.last_served_class_time
+						self.time_between_job2.append(time_diff)
+					self.have_seen_class2 = True
 				
-			self.last_served_class = new_job_to_serve.priority
+				self.last_served_class_time = curr_time + new_job_to_serve.size
+				self.last_served_class = new_job_to_serve.priority
+
 			new_job_to_serve.start_service_time = curr_time
 			self.server.push(new_job_to_serve, curr_time)
 
@@ -80,38 +84,45 @@ class NPPrioritySystem():
 
 		# Get new job and generate next arrival time
 		job_arrive = self.arrivals.arrive()
-		
-		# print("Arrival at {:.4f}, {}".format(curr_time, job_arrive))
 
+		# Count number of jobs in the system for each class
 		num1_jobs = self.queue1.num_jobs() + self.server.num_jobs_priority(1)
 		num2_jobs = self.queue2.num_jobs() + self.server.num_jobs_priority(2)
 
+		# Put this arrival in the correct queue; class 1 has strict priority
 		if job_arrive.priority == 1:
 			self.queue1.push(job_arrive)
 		else:
 			self.queue2.push(job_arrive)
 
+		# If the server is idle, try to grab a new job
 		if self.server.num_jobs() == 0:
-			# Server is idle right now, so take a new job if possible
+			# Pops job according to strict class 1 priority
 			next_job = self.get_next_job()
+
 			if next_job is not None:
 				next_job.start_service_time = curr_time
 				self.server.push(next_job, curr_time)
 
 				# Update time between jobs
-				# Otherwise end this run and start new one
-				if next_job.priority == 1:
-					if self.last_served_class1_time is not None:
-						time_diff = curr_time - self.last_served_class1_time
-						self.last_served_class1_time = curr_time + next_job.size
-						self.time_between_job1.append(time_diff)
-				else:
-					if self.last_served_class2_time is not None:
-						time_diff = curr_time - self.last_served_class2_time
-						self.last_served_class2_time = curr_time + next_job.size
-						self.time_between_job2.append(time_diff)
+				if next_job.priority != self.last_served_class:
+					if self.last_served_class == 2:
+						# Finished a run of class 2 jobs
+						if self.have_seen_class1:
+							time_diff = curr_time - self.last_served_class_time
+							self.time_between_job1.append(time_diff)
+						self.have_seen_class1 = True
 					
-				self.last_served_class = next_job.priority
+					elif self.last_served_class == 1:
+						# Finished a run of class 1 jobs
+						if self.have_seen_class2:
+							time_diff = curr_time - self.last_served_class_time
+							self.time_between_job2.append(time_diff)
+						self.have_seen_class2 = True
+
+					# New run starts after this job finishes, as it was the last time we served a job like it
+					self.last_served_class_time = curr_time + next_job.size
+					self.last_served_class = next_job.priority
 
 		return events.PriorityArrivalEvent(curr_time, num1_jobs, num2_jobs)
 
@@ -122,7 +133,6 @@ class NPPrioritySystem():
 		if self.server.time_next_depart() <= self.arrivals.time_next_arrive:
 			# Complete the job in the server before arrival can come
 			return self.handle_service()
-		
 
 	def simulate_run(self):
 		num_completions1 = 0
@@ -138,19 +148,10 @@ class NPPrioritySystem():
 		job2_sizes = []
 
 		# Start with first job and set up final priority
-		new_job = self.arrivals.arrive()
-		new_job.start_service_time = new_job.arrival_time
-		self.last_served_class = new_job.priority
-		if new_job.priority == 1:
-			self.last_served_class1_time = new_job.arrival_time
-		else:
-			self.last_served_class2_time = new_job.arrival_time
-		self.server.push(new_job, new_job.arrival_time)
-
 		self.time_between_job1 = []
 		self.time_between_job2 = []
 
-		while num_completions1 < self.num_jobs_per_run or num_completions2 < self.num_jobs_per_run:
+		while num_completions1 < self.num_jobs_per_run or num_completions2 < self.num_jobs_per_run or len(self.time_between_job1) < 300 or len(self.time_between_job2) < 300:
 			event = self.step()
 			if isinstance(event, events.PriorityDepartEvent):
 				if event.job.priority == 1:

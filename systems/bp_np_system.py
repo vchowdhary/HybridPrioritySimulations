@@ -27,10 +27,12 @@ class BusyPeriodNPSystem():
 		self.arrivals = arrivals.PriorityArrivals(lambda1, lambda2, mu1, mu2)
 		self.class_1_prio_prob = class1_prio_prob
 
-		self.is_class1_prio = bool(np.random.binomial(1, self.class_1_prio_prob))
-		new_job = self.arrivals.arrive()
-		new_job.start_service_time = new_job.arrival_time
-		self.server.push(new_job, new_job.arrival_time)
+		self.time_between_job1 = []
+		self.time_between_job2 = []
+		self.last_served_class = None
+		self.last_served_class_time = None
+		self.have_seen_class2 = False
+		self.have_seen_class1 = False
 
 	def handle_service(self):
 		# Get num jobs in system
@@ -57,6 +59,25 @@ class BusyPeriodNPSystem():
 			new_job_to_serve.start_service_time = curr_time
 			self.server.push(new_job_to_serve, curr_time)
 
+			if new_job_to_serve.priority != self.last_served_class:
+				if self.last_served_class == 2:
+					# Finished a run of class 2 jobs
+					if self.have_seen_class1:
+						time_diff = curr_time - self.last_served_class_time
+						self.time_between_job1.append(time_diff)
+					self.have_seen_class1 = True
+				
+				elif self.last_served_class == 1:
+					# Finished a run of class 1 jobs
+					if self.have_seen_class2:
+						time_diff = curr_time - self.last_served_class_time
+						self.time_between_job2.append(time_diff)
+					self.have_seen_class2 = True
+
+				# New run starts after this job finishes, as it was the last time we served a job like it
+				self.last_served_class_time = curr_time + new_job_to_serve.size
+				self.last_served_class = new_job_to_serve.priority
+
 		waiting_time = completed_job.start_service_time - completed_job.arrival_time
 		assert(abs(waiting_time - (curr_time - completed_job.arrival_time - completed_job.size)) <= 0.001)
 		return events.PriorityDepartEvent(curr_time, curr_time - completed_job.arrival_time, num1_jobs,
@@ -80,14 +101,35 @@ class BusyPeriodNPSystem():
 			first_queue = self.queue1 if self.is_class1_prio else self.queue2
 			second_queue = self.queue2 if self.is_class1_prio else self.queue1
 
+			next_job = None
 			if first_queue.num_jobs() != 0:
 				next_job = first_queue.pop()
-				next_job.start_service_time = curr_time
-				self.server.push(next_job, curr_time)
 			elif second_queue.num_jobs() != 0:
 				next_job = second_queue.pop()
+			
+			if next_job is not None:
 				next_job.start_service_time = curr_time
 				self.server.push(next_job, curr_time)
+
+				# Update time between jobs
+				if next_job.priority != self.last_served_class:
+					if self.last_served_class == 2:
+						# Finished a run of class 2 jobs
+						if self.have_seen_class1:
+							time_diff = curr_time - self.last_served_class_time
+							self.time_between_job1.append(time_diff)
+						self.have_seen_class1 = True
+					
+					elif self.last_served_class == 1:
+						# Finished a run of class 1 jobs
+						if self.have_seen_class2:
+							time_diff = curr_time - self.last_served_class_time
+							self.time_between_job2.append(time_diff)
+						self.have_seen_class2 = True
+
+					# New run starts after this job finishes, as it was the last time we served a job like it
+					self.last_served_class_time = curr_time + next_job.size
+					self.last_served_class = next_job.priority
 
 		return events.PriorityArrivalEvent(curr_time, num1_jobs, num2_jobs)
 
@@ -112,6 +154,18 @@ class BusyPeriodNPSystem():
 
 		job1_sizes = []
 		job2_sizes = []
+		
+		self.time_between_job1 = []
+		self.time_between_job2 = []
+		self.last_served_class = None
+		self.last_served_class_time = None
+		self.have_seen_class2 = False
+		self.have_seen_class1 = False
+
+		self.is_class1_prio = bool(np.random.binomial(1, self.class_1_prio_prob))
+		new_job = self.arrivals.arrive()
+		new_job.start_service_time = new_job.arrival_time
+		self.server.push(new_job, new_job.arrival_time)
 
 		while num_completions1 < self.num_jobs_per_run or num_completions2 < self.num_jobs_per_run:
 			event = self.step()
@@ -139,12 +193,17 @@ class BusyPeriodNPSystem():
 
 		T1 = 0 if len(response1_times) == 0 else sum(response1_times)/len(response1_times)
 		T2 = 0 if len(response2_times) == 0 else sum(response2_times)/len(response2_times)
+
 		TQ1 = 0 if len(waiting1_times) == 0 else sum(waiting1_times)/len(waiting1_times)
 		TQ2 = 0 if len(waiting2_times) == 0 else sum(waiting2_times)/len(waiting2_times)
+
 		N1 = 0 if len(num_jobs1_seen) == 0 else sum(num_jobs1_seen)/len(num_jobs1_seen)
 		N2 = 0 if len(num_jobs2_seen) == 0 else sum(num_jobs2_seen)/len(num_jobs2_seen)
 
-		return (T1, T2, TQ1, TQ2, N1, N2, S1, S2)
+		timeBetweenJob1 = 0 if len(self.time_between_job1) == 0 else sum(self.time_between_job1)/len(self.time_between_job1)
+		timeBetweenJob2 = 0 if len(self.time_between_job2) == 0 else sum(self.time_between_job2)/len(self.time_between_job2)
+
+		return (T1, T2, TQ1, TQ2, N1, N2, S1, S2, timeBetweenJob1, timeBetweenJob2)
 	def simulate(self):
 		t1_runs = []
 		t2_runs = []
@@ -154,8 +213,10 @@ class BusyPeriodNPSystem():
 		n2_runs = []
 		s1_runs = []
 		s2_runs = []
+		mt1_runs = []
+		mt2_runs = []
 		for i in range(self.num_runs):
-			avg_response1_time, avg_response2_time, avg_waiting1, avg_waiting2, avg_jobs1_seen, avg_jobs2_seen, avg_s1, avg_s2 = self.simulate_run()
+			avg_response1_time, avg_response2_time, avg_waiting1, avg_waiting2, avg_jobs1_seen, avg_jobs2_seen, avg_s1, avg_s2, mt1, mt2 = self.simulate_run()
 			t1_runs.append(avg_response1_time)
 			t2_runs.append(avg_response2_time)
 			tq1_runs.append(avg_waiting1)
@@ -164,5 +225,7 @@ class BusyPeriodNPSystem():
 			n2_runs.append(avg_jobs2_seen)
 			s1_runs.append(avg_s1)
 			s2_runs.append(avg_s2)
+			mt1_runs.append(mt1)
+			mt2_runs.append(mt2)
 			progress(i, self.num_runs)
-		return t1_runs, t2_runs, tq1_runs, tq2_runs, n1_runs, n2_runs, s1_runs, s2_runs
+		return t1_runs, t2_runs, tq1_runs, tq2_runs, n1_runs, n2_runs, s1_runs, s2_runs, mt1_runs, mt2_runs
