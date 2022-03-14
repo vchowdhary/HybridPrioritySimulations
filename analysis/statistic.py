@@ -25,7 +25,7 @@ class BasicNPResults():
 		self.mixingTime2 = mixingTime2
 
 class SwitchingStatistic():
-	def __init__(self, T1, T2, TA, TB, SA, SB, N1, N2, NA, NB, job1MixingTime, job2MixingTime):
+	def __init__(self, T1, T2, TA, TB, SA, SB, N1, N2, NA, NB, job1MixingTime, job2MixingTime, varJ1, varJ2):
 		self.T1 = T1
 		self.T2 = T2
 		self.TA = TA
@@ -38,9 +38,11 @@ class SwitchingStatistic():
 		self.NB = NB
 		self.job1MixingTime = job1MixingTime
 		self.job2MixingTime = job2MixingTime
+		self.varJ1 = varJ1
+		self.varJ2 = varJ2
 
 class SwitchingResults():
-	def __init__(self, T1s, T2s, TAs, TBs, SAs, SBs, N1s, N2s, NAs, NBs, mixingTime1, mixingTime2):
+	def __init__(self, T1s, T2s, TAs, TBs, SAs, SBs, N1s, N2s, NAs, NBs, mixingTime1, mixingTime2, varJ1, varJ2):
 		self.T1s = T1s
 		self.T2s = T2s
 		self.TAs = TAs
@@ -53,3 +55,5 @@ class SwitchingResults():
 		self.NBs = NBs
 		self.mixingTime1 = mixingTime1
 		self.mixingTime2 = mixingTime2
+		self.varJ1 = varJ1
+		self.varJ2 = varJ2

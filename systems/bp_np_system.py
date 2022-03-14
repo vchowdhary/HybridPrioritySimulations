@@ -200,10 +200,16 @@ class BusyPeriodNPSystem():
 		N1 = 0 if len(num_jobs1_seen) == 0 else sum(num_jobs1_seen)/len(num_jobs1_seen)
 		N2 = 0 if len(num_jobs2_seen) == 0 else sum(num_jobs2_seen)/len(num_jobs2_seen)
 
-		timeBetweenJob1 = 0 if len(self.time_between_job1) == 0 else sum(self.time_between_job1)/len(self.time_between_job1)
-		timeBetweenJob2 = 0 if len(self.time_between_job2) == 0 else sum(self.time_between_job2)/len(self.time_between_job2)
+		job1times = np.array(self.time_between_job1)
+		job2times = np.array(self.time_between_job2)
 
-		return (T1, T2, TQ1, TQ2, N1, N2, S1, S2, timeBetweenJob1, timeBetweenJob2)
+		timeBetweenJob1 = np.mean(job1times)
+		timeBetweenJob2 = np.mean(job2times)
+
+		varJ1 = np.var(job1times)
+		varJ2 = np.var(job2times)
+
+		return (T1, T2, TQ1, TQ2, N1, N2, S1, S2, timeBetweenJob1, timeBetweenJob2, varJ1, varJ2)
 	def simulate(self):
 		t1_runs = []
 		t2_runs = []
@@ -215,8 +221,10 @@ class BusyPeriodNPSystem():
 		s2_runs = []
 		mt1_runs = []
 		mt2_runs = []
+		varJ1_runs = []
+		varJ2_runs = []
 		for i in range(self.num_runs):
-			avg_response1_time, avg_response2_time, avg_waiting1, avg_waiting2, avg_jobs1_seen, avg_jobs2_seen, avg_s1, avg_s2, mt1, mt2 = self.simulate_run()
+			avg_response1_time, avg_response2_time, avg_waiting1, avg_waiting2, avg_jobs1_seen, avg_jobs2_seen, avg_s1, avg_s2, mt1, mt2, varJ1, varJ2 = self.simulate_run()
 			t1_runs.append(avg_response1_time)
 			t2_runs.append(avg_response2_time)
 			tq1_runs.append(avg_waiting1)
@@ -227,5 +235,7 @@ class BusyPeriodNPSystem():
 			s2_runs.append(avg_s2)
 			mt1_runs.append(mt1)
 			mt2_runs.append(mt2)
+			varJ1_runs.append(varJ1)
+			varJ2_runs.append(varJ2)
 			progress(i, self.num_runs)
-		return t1_runs, t2_runs, tq1_runs, tq2_runs, n1_runs, n2_runs, s1_runs, s2_runs, mt1_runs, mt2_runs
+		return t1_runs, t2_runs, tq1_runs, tq2_runs, n1_runs, n2_runs, s1_runs, s2_runs, mt1_runs, mt2_runs, varJ1_runs, varJ2_runs

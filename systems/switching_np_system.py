@@ -230,10 +230,16 @@ class SwitchingNPSystem():
 		NA = 0 if len(num_jobsA_seen) == 0 else sum(num_jobsA_seen)/len(num_jobsA_seen)
 		NB = 0 if len(num_jobsB_seen) == 0 else sum(num_jobsB_seen)/len(num_jobsB_seen)
 
-		timeBetweenJob1 = 0 if len(self.time_between_job1) == 0 else sum(self.time_between_job1)/len(self.time_between_job1)
-		timeBetweenJob2 = 0 if len(self.time_between_job2) == 0 else sum(self.time_between_job2)/len(self.time_between_job2)
+		job1times = np.array(self.time_between_job1)
+		job2times = np.array(self.time_between_job2)
 
-		return statistic.SwitchingStatistic(T1, T2, TA, TB, SA, SB, N1, N2, NA, NB, timeBetweenJob1, timeBetweenJob2)
+		timeBetweenJob1 = np.mean(job1times)
+		timeBetweenJob2 = np.mean(job2times)
+
+		varTimeBetweenJob1 = np.var(job1times)
+		varTimeBetweenJob2 = np.var(job2times)
+
+		return statistic.SwitchingStatistic(T1, T2, TA, TB, SA, SB, N1, N2, NA, NB, timeBetweenJob1, timeBetweenJob2, varTimeBetweenJob1, varTimeBetweenJob2)
 	def simulate(self):
 		t1_runs = []
 		t2_runs = []
@@ -247,6 +253,8 @@ class SwitchingNPSystem():
 		nB_runs = []
 		mt1_runs = []
 		mt2_runs = []
+		var_mt1_runs = []
+		var_mt2_runs = []
 		for i in range(self.num_runs):
 			run_result = self.simulate_run()
 			t1_runs.append(run_result.T1)
@@ -261,5 +269,7 @@ class SwitchingNPSystem():
 			nB_runs.append(run_result.NB)
 			mt1_runs.append(run_result.job1MixingTime)
 			mt2_runs.append(run_result.job2MixingTime)
+			var_mt1_runs.append(run_result.varJ1)
+			var_mt2_runs.append(run_result.varJ2)
 			progress(i, self.num_runs)
-		return statistic.SwitchingResults(t1_runs, t2_runs, tA_runs, tB_runs, sA_runs, sB_runs, n1_runs, n2_runs, nA_runs, nB_runs, mt1_runs, mt2_runs)
+		return statistic.SwitchingResults(t1_runs, t2_runs, tA_runs, tB_runs, sA_runs, sB_runs, n1_runs, n2_runs, nA_runs, nB_runs, mt1_runs, mt2_runs, var_mt1_runs, var_mt2_runs)

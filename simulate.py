@@ -205,7 +205,10 @@ def run_switching_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, sta
 		print("Time between class 1 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT1, EMT1))
 		print("Time between class 2 jobs: expected: {:.5f}, actual: {:.5f}".format(expectedMT2, EMT2))
 
-	return (EMT1, EMT2)
+	VT1 = sum(switching_res.varJ1)/len(switching_res.varJ1)
+	VT2 = sum(switching_res.varJ2)/len(switching_res.varJ2)
+
+	return (EMT1, EMT2, VT1, VT2)
 
 def run_bp_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob, verbose=True):
 	if verbose:
@@ -225,7 +228,7 @@ def run_bp_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_pr
 	
 
 	basic_system = bp_np_system.BusyPeriodNPSystem(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob)
-	T1_runs, T2_runs, TQ1_runs, TQ2_runs, N1_runs, N2_runs, S1_runs, S2_runs, MT1_runs, MT2_runs = basic_system.simulate()
+	T1_runs, T2_runs, TQ1_runs, TQ2_runs, N1_runs, N2_runs, S1_runs, S2_runs, MT1_runs, MT2_runs, varJ1_runs, varJ2_runs = basic_system.simulate()
 
 	ES1 = sum(S1_runs)/len(S1_runs)
 	ES2 = sum(S2_runs)/len(S2_runs)
@@ -270,7 +273,10 @@ def run_bp_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_pr
 	EMT1 = sum(MT1_runs)/len(MT1_runs)
 	EMT2 = sum(MT2_runs)/len(MT2_runs)
 
-	return (EMT1, EMT2)
+	VT1 = sum(varJ1_runs)/len(varJ1_runs)
+	VT2 = sum(varJ2_runs)/len(varJ2_runs)
+
+	return (EMT1, EMT2, VT1, VT2)
 
 def compare_server_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_prio_prob):
 	print("Running Basic Server Switching Non-Preemptive Simulation...")
