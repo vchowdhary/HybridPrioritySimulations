@@ -143,6 +143,7 @@ class BusyPeriodNPSystem():
 		
 
 	def simulate_run(self):
+		self.server = server.Server()
 		num_completions1 = 0
 		num_completions2 = 0
 
@@ -200,8 +201,8 @@ class BusyPeriodNPSystem():
 		N1 = 0 if len(num_jobs1_seen) == 0 else sum(num_jobs1_seen)/len(num_jobs1_seen)
 		N2 = 0 if len(num_jobs2_seen) == 0 else sum(num_jobs2_seen)/len(num_jobs2_seen)
 
-		job1times = np.array(self.time_between_job1)
-		job2times = np.array(self.time_between_job2)
+		job1times = np.array(self.server.time_between_job1s)
+		job2times = np.array(self.server.time_between_job2s)
 
 		timeBetweenJob1 = np.mean(job1times)
 		timeBetweenJob2 = np.mean(job2times)

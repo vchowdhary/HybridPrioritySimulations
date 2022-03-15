@@ -273,6 +273,10 @@ def run_bp_np(num_runs, num_jobs_per_run, lambda1, lambda2, mu1, mu2, class_1_pr
 	EMT1 = sum(MT1_runs)/len(MT1_runs)
 	EMT2 = sum(MT2_runs)/len(MT2_runs)
 
+	if verbose:
+		print("Time between class 1 jobs: {:.5f}".format(EMT1))
+		print("Time between class 2 jobs: {:.5f}".format(EMT2))
+
 	VT1 = sum(varJ1_runs)/len(varJ1_runs)
 	VT2 = sum(varJ2_runs)/len(varJ2_runs)
 

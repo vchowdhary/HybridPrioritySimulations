@@ -1,3 +1,4 @@
+from xmlrpc.client import Server
 import util.arrivals as arrivals
 import util.server as server
 import sys
@@ -135,6 +136,10 @@ class NPPrioritySystem():
 			return self.handle_service()
 
 	def simulate_run(self):
+		self.server = server.Server()
+		self.queue1 = queue.FCFSQueue()
+		self.queue2 = queue.FCFSQueue()
+
 		num_completions1 = 0
 		num_completions2 = 0
 
@@ -184,8 +189,8 @@ class NPPrioritySystem():
 		N1 = 0 if len(num_jobs1_seen) == 0 else sum(num_jobs1_seen)/len(num_jobs1_seen)
 		N2 = 0 if len(num_jobs2_seen) == 0 else sum(num_jobs2_seen)/len(num_jobs2_seen)
 
-		timeBetweenJob1 = 0 if len(self.time_between_job1) == 0 else sum(self.time_between_job1)/len(self.time_between_job1)
-		timeBetweenJob2 = 0 if len(self.time_between_job2) == 0 else sum(self.time_between_job2)/len(self.time_between_job2)
+		timeBetweenJob1 = 0 if len(self.server.time_between_job1s) == 0 else sum(self.server.time_between_job1s)/len(self.server.time_between_job1s)
+		timeBetweenJob2 = 0 if len(self.server.time_between_job2s) == 0 else sum(self.server.time_between_job2s)/len(self.server.time_between_job2s)
 
 		return statistic.BasicNPStatistic(T1, T2, TQ1, TQ2, S1, S2, N1, N2, timeBetweenJob1, timeBetweenJob2)
 	def simulate(self):

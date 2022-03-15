@@ -5,8 +5,10 @@ class Server():
 	def __init__(self):
 		self.job_serving = None
 		self.time_depart = float('inf')
-		self.last_time_served_job1 = 0.0
-		self.last_time_served_job2 = 0.0
+		self.last_time_served_job1 = None
+		self.last_time_served_job2 = None
+		self.time_between_job1s = []
+		self.time_between_job2s = []
 
 	def time_next_depart(self):
 		# Time for job to depart
@@ -26,9 +28,13 @@ class Server():
 			self.time_depart = time_now + job.size
 			self.job_serving = job
 			if job.priority == 1:
-				self.last_time_served_job1 = time_now
+				if self.last_time_served_job1 is not None:
+					self.time_between_job1s.append(time_now - self.last_time_served_job1)
+				self.last_time_served_job1 = time_now + job.size
 			else:
-				self.last_time_served_job2 = time_now
+				if self.last_time_served_job2 is not None:
+					self.time_between_job2s.append(time_now - self.last_time_served_job2)
+				self.last_time_served_job2 = time_now + job.size
 
 	def work(self, time_now):
 		# Work left in server is just the current job
